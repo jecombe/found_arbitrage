@@ -2,9 +2,9 @@ import ArbitrageNft from "./exchanges/ArbitrageNft.js";
 
 const options = {
   platforms: ["OPENSEA", "X2Y2"],
-  numberTrending: 5,
-  numberNfts: 5,
-  tokenLoan: "0x65aFADD39029741B3b8f0756952C74678c9cEC93",
+  tokenLoan: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+  addrFlashloan: "0x97E2D08BeFd9B3C5CBe917fdf5362F66dC5791cF",
+  chain: "mainnet",
 };
 
 const arbitrage = new ArbitrageNft(options);

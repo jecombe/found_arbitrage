@@ -8,4 +8,4 @@ const buyNft = async (tokenId, collecitonAddr) => {
   //console.log("Tx: ", tx);
 };
 
-buyNft("52", "0x05a0b0985ba3b7bd9ade8a7478caa2fa4fda24e5");
+buyNft("478", "0x3bfc3134645ebe0393f90d6a19bcb20bd732964f");

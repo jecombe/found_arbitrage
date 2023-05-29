@@ -20,5 +20,9 @@
     "node-fetch": "^3.3.1",
     "opensea-js": "^5.0.0",
     "web3": "^1.8.2"
+  },
+  "devDependencies": {
+    "@flashbots/ethers-provider-bundle": "^0.6.2",
+    "web3-eth-contract": "^1.10.0"
   }
 }
