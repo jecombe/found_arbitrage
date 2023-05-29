@@ -2,27 +2,9 @@ import axios from "axios";
 import _ from "lodash";
 import opensea from "opensea-js";
 import Logger from "../../utils/Logger.js";
-import Moralis from "moralis";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const headersTwo = {
-  authority: "api.uniswap.org",
-  accept: "*/*",
-  "accept-language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
-  "content-type": " application/json",
-  origin: "https://app.uniswap.org",
-  referer: "https://app.uniswap.org/",
-  "sec-ch-ua":
-    '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
-  "sec-ch-ua-mobile": "?0",
-  "sec-ch-ua-platform": "macOS",
-  "sec-fetch-dest": "empty",
-  "sec-fetch-mode": "cors",
-  "sec-fetch-site": "same-site",
-  "user-agent":
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
-};
 export default class {
   constructor(utils) {
     this.exchange = "opensea";
