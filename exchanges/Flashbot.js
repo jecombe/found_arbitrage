@@ -4,7 +4,7 @@ import {
 } from "@flashbots/ethers-provider-bundle";
 import dotenv from "dotenv";
 import Web3EthContract from "web3-eth-contract";
-//import { BigNumber } from "ethers";
+import { BigNumber as big } from "ethers";
 import ethers from "ethers";
 import { createRequire } from "module";
 import Logger from "../utils/Logger.js";
@@ -12,7 +12,9 @@ const require = createRequire(import.meta.url);
 const artifactFlashloan = require("../artifacts/Flashloan.json");
 import BigNumber from "bignumber.js";
 dotenv.config();
-
+export const GWEI = big.from(10).pow(9);
+export const PRIORITY_FEE = GWEI.mul(100);
+const priorityFee = big.from(10).pow(9);
 export default class {
   constructor(config, utils) {
     this.utils = utils;
@@ -21,6 +23,9 @@ export default class {
     this.authSigner = this.getWallet();
     this.provider = this.getProvider();
     this.contractFlashloan = this.getContract();
+    this.maxFeePerGas = null;
+    this.maxPriorityFeePerGas = null;
+    this.gasLimit = null;
   }
 
   getContract() {
@@ -43,43 +48,31 @@ export default class {
     return new ethers.Wallet(process.env.SECRET_KEY, this.provider);
   }
 
-  getMaxPrioFees(ethProfit) {
-    // Convertir le montant en Wei
-    // const amountInWei = this.utils.web3.utils.toWei(
-    //   ethProfit.toString(),
-    //   "ether"
-    // );
-    // const ethAmount = new BigNumber(ethProfit.toString());
-    // const percentage = new BigNumber("0.01");
-    // const weiAmount = ethAmount.times(1e18); // Conversion en wei
-    // const deduction = weiAmount.times(1 - percentage);
+  async manageEip1559(bytesParams, profit) {
+    try {
+      await this.getBlock();
+      // const profitAfterAave = profit * 0.0005; // 0.05% aave interest
+      // const ethAmountAfterInterest = profit - profitAfterAave;
+      this.gasLimit = big.from(await this.getEstimateGasMargin(bytesParams));
+      const maxFeePerGasWei = this.getMaxBaseFeeInFutureBlock();
+      // Convertir la somme d'ETH en wei
+      const amountWei = ethers.utils.parseUnits(profit.toFixed(18), 18);
+      this.maxPriorityFeePerGas = big.from(10).pow(9);
+      this.maxFeePerGas = priorityFee.add(maxFeePerGasWei);
+      const transactionCostWei = this.maxFeePerGas.mul(this.gasLimit);
 
-    // const deductionInteger = new BigNumber(
-    //   parseInt(deduction.mul(0.01).toFixed(0))
-    // );
+      Logger.debug(
+        `Transaction price net: `,
+        ethers.utils.formatEther(transactionCostWei)
+      );
 
-    // Quantité d'ETH en Gwei
-    const ethAmount = new BigNumber(ethProfit);
-    const ethInGwei = ethAmount.mul(10 ** 9);
-
-    // Pourcentage à déduire (0.01%)
-    const percentage = new BigNumber("0.01");
-    const maxPriorityFee = ethInGwei.mul(percentage).div(100).toFixed(8);
-
-    // Calcul de la nouvelle quantité d'ETH en Gwei
-    const remainingEthInGwei = ethInGwei.minus(maxPriorityFee);
-
-    // Conversion du résultat en ETH
-    const remainingEth = remainingEthInGwei.div(10 ** 9);
-
-    return { maxPriorityFee, remainingEth };
-
-    // return deduction.toString();
-    // Calculer la Max Priority Fee (1%)
-    // return amountInWei;
-    //const result = weiAmount.times(ethAmount);
-
-    //return result;
+      // Calculer le montant restant après déduction des frais de transaction
+      const remainingAmountWei = amountWei.sub(transactionCostWei);
+      return ethers.utils.formatEther(remainingAmountWei);
+    } catch (error) {
+      Logger.error("manageEip1559", error);
+      return error;
+    }
   }
 
   async createBundle() {
@@ -91,16 +84,25 @@ export default class {
     );
   }
 
-  async createTx(bytes, gasLimit) {
+  async createTx(bytesParams) {
     return {
       to: this.config.contractAddr,
       type: 2,
-      maxFeePerGas: this.getMaxFeePerGas(),
-      maxPriorityFeePerGas: PRIORITY_FEE,
-      gasLimit,
-      data: this.contractFlashloan.methods.requestFlashLoan(bytes).encodeABI(), //this.contractFlashloan.methods.requestFlashloan(bytes).encodeABI(),
-      /// value: ethers.utils.parseEther("0"),
+      maxFeePerGas: this.maxFeePerGas,
+      maxPriorityFeePerGas: this.maxPriorityFeePerGas,
+      gasLimit: this.gasLimit,
+      data: this.contractFlashloan.methods
+        .requestFlashLoan(bytesParams)
+        .encodeABI(),
       chainId: this.config.chainId,
+      // to: this.config.contractAddr,
+      // type: 2,
+      // maxFeePerGas: priorityFee.add(this.getMaxBaseFeeInFutureBlock()),
+      // //  maxPriorityFeePerGas: PRIORITY_FEE,
+      // gasLimit,
+      // data: this.contractFlashloan.methods.requestFlashLoan(bytes).encodeABI(), //this.contractFlashloan.methods.requestFlashloan(bytes).encodeABI(),
+      // value: 0,
+      // chainId: this.config.chainId,
     };
   }
 
@@ -120,12 +122,6 @@ export default class {
   calculateProfit() {}
 
   async signBundle(transaction) {
-    // const flashbotsProvider = await FlashbotsBundleProvider.create(
-    //   this.provider,
-    //   this.authSigner,
-    //   "https://relay-goerli.flashbots.net",
-    //   "goerli"
-    // );
     try {
       await this.createBundle();
 
@@ -208,6 +204,17 @@ export default class {
     }
   }
 
+  async tryTransaction(bytesParams) {
+    try {
+      await this.signBundle(await this.createTx(bytesParams));
+      const isSimul = await this.simulateBundle();
+      // if (isSimul) await this.sendBundle();
+      // else Logger.trace("isSimulate => ", isSimul);
+    } catch (error) {
+      Logger.error("tryTransaction", error);
+      return error;
+    }
+  }
   async getBlock() {
     try {
       this.blockNumber = await this.provider.getBlockNumber();

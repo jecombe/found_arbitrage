@@ -12,9 +12,6 @@ const require = createRequire(import.meta.url);
 const artifactFlashloan = require("../artifacts/Flashloan.json");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const GWEI = BigNumber.from(10).pow(9);
-const PRIORITY_FEE = GWEI.mul(100);
-
 export default class {
   constructor(params) {
     this.tokenLoan = params.tokenLoan;
@@ -54,75 +51,33 @@ export default class {
     }
   }
 
-  getProfit(profitBrut, estimateGas, maxFeePerGas, maxPriorityFeePerGas) {
-    // Convertissez les valeurs en objets BigNumber
-    const profitDifferenceWei = ethers.utils.parseEther(`${profitBrut}`);
-
-    // Calculez les frais de transaction en Wei
-    const transactionFee = maxFeePerGas
-      .mul(estimateGas)
-      .add(maxPriorityFeePerGas.mul(estimateGas));
-    // Calculez les frais d'Aave
-    const aaveFee = profitDifferenceWei
-      .mul(ethers.utils.parseUnits("0.05", "ether"))
-      .div(ethers.utils.parseUnits("1", "ether"));
-
-    Logger.debug(
-      `transaction fees total: ${ethers.utils.formatEther(transactionFee)}`
-    );
-    // Calculez le profit net en Wei (en déduisant les frais d'Aave)
-    const profitNetWei = profitDifferenceWei.sub(transactionFee).sub(aaveFee);
-
-    // Convertissez le profit net en ETH
-    return ethers.utils.formatEther(profitNetWei);
-  }
-
-  async isProfitableGas(bytesParams, profit) {
+  async isProfitableGas(bytesParams, profit, collectionName) {
     // calculate price gas and call flashloan cost
     try {
-      await this.flashbot.getBlock();
-
-      const profitAfterAave = profit * 0.0005; // 0.05% aave interest
-      const ethAmountAfterInterest = profit - profitAfterAave;
-      const estimateGas = BigNumber.from(
-        await this.flashbot.getEstimateGasMargin(bytesParams)
-      );
-      const baseFee = this.flashbot.getMaxBaseFeeInFutureBlock();
-      const { maxPriorityFee, remainingEth } = this.flashbot.getMaxPrioFees(
-        ethAmountAfterInterest.toString()
-      );
-      const amountInWei = ethers.utils.parseEther(remainingEth.toString());
-      const maxPriorityFeeInWei = ethers.utils.parseUnits(
-        maxPriorityFee.toString(),
-        "gwei"
+      const netProfit = await this.flashbot.manageEip1559(
+        bytesParams,
+        profit,
+        collectionName
       );
 
-      // Calcul des frais totaux
-      const deduction = maxPriorityFeeInWei.add(
-        estimateGas.mul(baseFee.toString())
-      );
-      //  console.log(deduction.toString());
-      const remainingAmountInWei = amountInWei.sub(deduction.toString());
-      const profitNet = ethers.utils
-        .formatEther(remainingAmountInWei)
-        .toString();
-      Logger.debug(`Initial quantity ETH: ${profit}`);
-      Logger.debug(`Fees transaction: ${ethers.utils.formatEther(deduction)}`);
-      Logger.debug(`Remaining ETH: ${ethers.utils.formatEther(deduction)}`);
-      Logger.debug(`Net ETH profit: ${profitNet}`);
-      if (profitNet > 0) {
+      Logger.debug("Net profit: ", netProfit.toString());
+
+      if (netProfit > 0) {
         this.telegram.sendMessage(
-          `Collection ${collectionName} is profitable for ~= ${profitNet} ETH`
+          `Collection ${collectionName} is profitable for ~= ${netProfit} ETH`
         );
         Logger.info(
-          `Collection ${collectionName} is profitable for ~= ${profitNet} ETH`
+          `Collection ${collectionName} is profitable for ~= ${netProfit} ETH`
         );
-        // const tx = await this.flashbot.createTx(bytesParams, estimateGasMargin);
+        await this.flashbot.tryTransaction(bytesParams);
+      } else {
+        Logger.trace(`Collection ${collectionName} is not profitable`);
+        //  const tx = await this.flashbot.createTx(bytesParams);
+
+        await this.flashbot.tryTransaction(bytesParams);
         // await this.flashbot.signBundle(tx);
         // const isSimul = await this.flashbot.simulateBundle();
-        // if (isSimul) await this.flashbot.sendBundle();
-        // else Logger.trace("isSimulate => ", isSimul);
-      } else Logger.warn(`Collection ${collectionName} is not profitable`);
+      }
     } catch (error) {
       Logger.error("isProfitableGas", error);
     }
@@ -161,16 +116,23 @@ export default class {
     }
   }
 
-  async manageProfit(difference, amm, collectionAddr, priceInEth) {
-    const pools = await amm.getPoolInfos(collectionAddr, priceInEth);
-    if (_.isEmpty(pools)) {
-      Logger.debug(
-        `POOL ON COLLECTION ${amm.collections[collectionAddr].name} IS EMPTY BECAUSE ANY POOLS HAVE CORRECT BALANCES`
-      );
-      return;
-    }
-
+  async manageProfit(
+    difference,
+    amm,
+    collectionAddr,
+    priceInEth,
+    exchangeToBuy,
+    nfts
+  ) {
     try {
+      const pools = await amm.getPoolInfos(collectionAddr, priceInEth);
+      if (_.isEmpty(pools)) {
+        Logger.debug(
+          `POOL ON COLLECTION ${amm.collections[collectionAddr].name} IS EMPTY BECAUSE ANY POOLS HAVE CORRECT BALANCES`
+        );
+        return;
+      }
+
       const bytesAllParams = await this.getParamsEncoding(
         exchangeToBuy,
         nfts[0],
@@ -187,6 +149,7 @@ export default class {
         amm.collections[collectionAddr].name
       );
     } catch (error) {
+      Logger.error("manageProfit", error);
       return error;
     }
   }
@@ -197,22 +160,29 @@ export default class {
     );
     const difference = Number(priceInEth) - Number(nfts[0].price);
     Logger.trace(`Gross profit: ${Number(difference).toFixed(18)} ETH`);
-    if (difference > 0) {
-      try {
-        Logger.info(
-          `Maybe profitable arbitrage ${nfts[0].tokenId} on collection ${amm.collections[collectionAddr].name} buy on ${exchangeToBuy.exchange}: ${nfts[0].price} sell to ${amm.exchange}: ${priceInEth} DIFFERENCE: ${difference}`
-        );
-        await this.manageProfit(difference, amm, collectionAddr, priceInEth);
-      } catch (error) {
-        this.telegram.sendMessage(`ERROR: COMPARE PRICE ENCODING`);
-
-        Logger.error("COMPARE PRICE ENCODING", error);
-      }
-    } else {
-      Logger.fatal(
-        `Not profitable arbitrage ${nfts[0].tokenId} on collection ${amm.collections[collectionAddr].name} buy on ${exchangeToBuy.exchange}: ${nfts[0].price} sell to ${amm.exchange}: ${priceInEth} DIFFERENCE: ${difference}`
+    // if (difference > 0) {
+    try {
+      Logger.info(
+        `Maybe profitable arbitrage ${nfts[0].tokenId} on collection ${amm.collections[collectionAddr].name} buy on ${exchangeToBuy.exchange}: ${nfts[0].price} sell to ${amm.exchange}: ${priceInEth} DIFFERENCE: ${difference}`
       );
+      await this.manageProfit(
+        difference,
+        amm,
+        collectionAddr,
+        priceInEth,
+        exchangeToBuy,
+        nfts
+      );
+    } catch (error) {
+      this.telegram.sendMessage(`ERROR: COMPARE PRICE ENCODING`);
+
+      Logger.error("COMPARE PRICE ENCODING", error);
     }
+    // } else {
+    //   Logger.fatal(
+    //     `Not profitable arbitrage ${nfts[0].tokenId} on collection ${amm.collections[collectionAddr].name} buy on ${exchangeToBuy.exchange}: ${nfts[0].price} sell to ${amm.exchange}: ${priceInEth} DIFFERENCE: ${difference}`
+    //   );
+    // }
   }
 
   async manageArbitrage({ amm, toCompare }) {
