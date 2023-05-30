@@ -36,10 +36,6 @@ export default class {
     );
   }
 
-  getGwei() {}
-
-  getMaxPriorityfees() {}
-
   getProvider() {
     return new ethers.providers.JsonRpcProvider(process.env.PROVIDER_MAINNET);
   }
@@ -51,11 +47,8 @@ export default class {
   async manageEip1559(bytesParams, profit) {
     try {
       await this.getBlock();
-      // const profitAfterAave = profit * 0.0005; // 0.05% aave interest
-      // const ethAmountAfterInterest = profit - profitAfterAave;
       this.gasLimit = big.from(await this.getEstimateGasMargin(bytesParams));
       const maxFeePerGasWei = this.getMaxBaseFeeInFutureBlock();
-      // Convertir la somme d'ETH en wei
       const amountWei = ethers.utils.parseUnits(profit.toFixed(18), 18);
       this.maxPriorityFeePerGas = big.from(10).pow(9);
       this.maxFeePerGas = priorityFee.add(maxFeePerGasWei);
@@ -114,8 +107,6 @@ export default class {
 
     return marginGas;
   }
-
-  calculateProfit() {}
 
   async signBundle(transaction) {
     try {

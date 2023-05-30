@@ -21,6 +21,7 @@ export default class {
     this.telegram = new Telegram();
     this.config = this.createConfig(params);
     this.balance = null;
+    this.flashloanFees = params.flashloanFees;
     this.flashbot = new Flashbot(this.config, this.utils);
     this.exchanges = [
       {
@@ -150,10 +151,6 @@ export default class {
 
   async getEmpruntable() {
     try {
-      // const balanceWei = await this.flashbot.contractFlashloan.methods
-      //   .getBalance()
-      //   .call();
-
       // Taux de commission en décimal
       const commissionRate = 0.05;
 
@@ -161,7 +158,7 @@ export default class {
       const balanceEth = ethers.utils.formatEther(this.balance);
 
       // Calcul du montant empruntable en ETH
-      return parseFloat(balanceEth) / (1 + commissionRate);
+      return parseFloat(balanceEth) / (1 + this.flashloanFees);
     } catch (error) {
       console.log(error);
     }
