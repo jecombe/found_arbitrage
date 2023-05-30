@@ -168,7 +168,12 @@ export default class {
     // if (difference > 0) {
     try {
       Logger.info(
-        `Maybe profitable arbitrage ${nfts[0].tokenId} on collection ${amm.collections[collectionAddr].name} buy on ${exchangeToBuy.exchange}: ${nfts[0].price} sell to ${amm.exchange}: ${priceInEth} DIFFERENCE: ${difference}`
+        ` 🚨 Maybe profitable arbitrage ! 🚨\n
+        NftId: ${nfts[0].tokenId}\n
+        Collection ${amm.collections[collectionAddr].name}\n
+        ${exchangeToBuy.name} price: ${nfts[0].price} ETH
+        ${amm.exchange} price: ${priceInEth} ETH
+        Difference: ${difference} ETH`
       );
       if (nfts[0].price > this.borrowable) {
         Logger.fatal(
