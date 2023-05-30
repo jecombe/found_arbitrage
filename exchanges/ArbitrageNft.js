@@ -171,7 +171,11 @@ export default class {
         `Maybe profitable arbitrage ${nfts[0].tokenId} on collection ${amm.collections[collectionAddr].name} buy on ${exchangeToBuy.exchange}: ${nfts[0].price} sell to ${amm.exchange}: ${priceInEth} DIFFERENCE: ${difference}`
       );
       if (nfts[0].price > this.borrowable) {
-        Logger.fatal(`priceInEth > this.borrowable ${this.borrowable}`);
+        Logger.fatal(
+          `can't borrow no enought found: \n-balance: ${ethers.utils.formatEther(
+            this.balance
+          )} ETH\n-priceNft: ${nfts[0].price}\n-borrowable: ${this.borrowable}`
+        );
         return;
       }
       await this.manageProfit(
