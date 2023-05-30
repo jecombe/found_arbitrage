@@ -35,6 +35,9 @@ export default class {
   convertToEth(number) {
     return Number(ethers.utils.formatUnits(`${number}`, 18)).toFixed(4);
   }
+  convert(number) {
+    return this.web3.utils.fromWei(number.toString(), "ether");
+  }
   convertToWei(eth) {
     return ethers.utils.parseUnits(eth, "ether");
   }
