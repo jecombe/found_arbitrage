@@ -171,7 +171,7 @@ export default class {
         `Maybe profitable arbitrage ${nfts[0].tokenId} on collection ${amm.collections[collectionAddr].name} buy on ${exchangeToBuy.exchange}: ${nfts[0].price} sell to ${amm.exchange}: ${priceInEth} DIFFERENCE: ${difference}`
       );
       if (nfts[0].price > this.borrowable) {
-        Logger.trace(`priceInEth > this.borrowable ${this.borrowable}`);
+        Logger.fatal(`priceInEth > this.borrowable ${this.borrowable}`);
         return;
       }
       await this.manageProfit(
