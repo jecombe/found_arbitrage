@@ -20,7 +20,7 @@ export default class {
     this.utils = new Utils();
     this.telegram = new Telegram();
     this.config = this.createConfig(params);
-
+    this.balance = null;
     this.flashbot = new Flashbot(this.config, this.utils);
     this.exchanges = [
       {
@@ -133,6 +133,7 @@ export default class {
         pools[0].poolAddress,
         amm
       );
+      console.log(bytesAllParams);
 
       if (!bytesAllParams) return false;
 
@@ -144,6 +145,25 @@ export default class {
     } catch (error) {
       Logger.error("manageProfit", error);
       return error;
+    }
+  }
+
+  async getEmpruntable() {
+    try {
+      // const balanceWei = await this.flashbot.contractFlashloan.methods
+      //   .getBalance()
+      //   .call();
+
+      // Taux de commission en décimal
+      const commissionRate = 0.05;
+
+      // Conversion de la balance en ETH
+      const balanceEth = ethers.utils.formatEther(this.balance);
+
+      // Calcul du montant empruntable en ETH
+      return parseFloat(balanceEth) / (1 + commissionRate);
+    } catch (error) {
+      console.log(error);
     }
   }
 
@@ -171,11 +191,6 @@ export default class {
 
       Logger.error("COMPARE PRICE ENCODING", error);
     }
-    // } else {
-    //   Logger.fatal(
-    //     `Not profitable arbitrage ${nfts[0].tokenId} on collection ${amm.collections[collectionAddr].name} buy on ${exchangeToBuy.exchange}: ${nfts[0].price} sell to ${amm.exchange}: ${priceInEth} DIFFERENCE: ${difference}`
-    //   );
-    // }
   }
 
   async manageArbitrage({ amm, toCompare }) {
@@ -205,8 +220,14 @@ export default class {
     }
   }
 
+  async getBalance() {
+    return this.flashbot.contractFlashloan.methods.getBalance().call();
+  }
+
   async start() {
     Logger.trace("START ARBITRAGE");
+    this.balance = await this.getBalance();
+    const montantEmprubntable = await this.getEmpruntable();
     this.telegram.sendMessage(`Start arbitrage ${new Date()}`);
     this.exchanges.forEach((element) => {
       this.manageArbitrage(element);
