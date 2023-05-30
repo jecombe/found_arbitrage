@@ -7,6 +7,7 @@ import ethers from "ethers";
 import { BigNumber } from "ethers";
 import { createRequire } from "module";
 import Flashbot from "./Flashbot.js";
+import Telegram from "../utils/Telegram.js";
 const require = createRequire(import.meta.url);
 const artifactFlashloan = require("../artifacts/Flashloan.json");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -20,6 +21,7 @@ export default class {
     this.addrFlashloan = params.addrFlashloan;
     this.amount = params.amount;
     this.utils = new Utils();
+    this.telegram = new Telegram();
     this.config = this.createConfig(params);
 
     this.flashbot = new Flashbot(this.config, this.utils);
@@ -75,9 +77,8 @@ export default class {
     return ethers.utils.formatEther(profitNetWei);
   }
 
-  async isProfitableGas(bytesParams, profit, name) {
+  async isProfitableGas(bytesParams, profit) {
     // calculate price gas and call flashloan cost
-    // const flashbotsProvider = await this.createFlashBot();
     try {
       await this.flashbot.getBlock();
 
@@ -110,6 +111,9 @@ export default class {
       Logger.debug(`Remaining ETH: ${ethers.utils.formatEther(deduction)}`);
       Logger.debug(`Net ETH profit: ${profitNet}`);
       if (profitNet > 0) {
+        this.telegram.sendMessage(
+          `Collection ${collectionName} is profitable for ~= ${profitNet} ETH`
+        );
         Logger.info(
           `Collection ${collectionName} is profitable for ~= ${profitNet} ETH`
         );
@@ -200,7 +204,9 @@ export default class {
         );
         await this.manageProfit(difference, amm, collectionAddr, priceInEth);
       } catch (error) {
-        Logger.error("CONMPARE PRICE ENCODING", error);
+        this.telegram.sendMessage(`ERROR: COMPARE PRICE ENCODING`);
+
+        Logger.error("COMPARE PRICE ENCODING", error);
       }
     } else {
       Logger.fatal(
@@ -210,30 +216,35 @@ export default class {
   }
 
   async manageArbitrage({ amm, toCompare }) {
-    await amm.getTrendingCollections(amm.collections);
-    this.saveCollection = amm.collections;
-    for await (const collectionAddr of Object.keys(amm.collections)) {
-      for await (const exchange of toCompare) {
-        await sleep(1000);
-        const nfts = await exchange.getNftsOnCollection(
-          collectionAddr,
-          amm.collections[collectionAddr]
-        );
-        if (_.isEmpty(nfts))
-          Logger.warn(
-            `Collection ${amm.collections[collectionAddr].name} not found on ${exchange.exchange}`
+    try {
+      await amm.getTrendingCollections(amm.collections);
+      this.saveCollection = amm.collections;
+      for await (const collectionAddr of Object.keys(amm.collections)) {
+        for await (const exchange of toCompare) {
+          await sleep(1000);
+          const nfts = await exchange.getNftsOnCollection(
+            collectionAddr,
+            amm.collections[collectionAddr]
           );
-        else await this.comparePrices(nfts, amm, collectionAddr, exchange);
+          if (_.isEmpty(nfts))
+            Logger.warn(
+              `Collection ${amm.collections[collectionAddr].name} not found on ${exchange.exchange}`
+            );
+          else await this.comparePrices(nfts, amm, collectionAddr, exchange);
+        }
       }
-    }
-    Logger.info("Waiting for update...");
-    await sleep(60000);
+      Logger.info("Waiting for update...");
+      await sleep(60000);
 
-    this.manageArbitrage({ amm, toCompare });
+      this.manageArbitrage({ amm, toCompare });
+    } catch (error) {
+      this.telegram.sendMessage(`ERROR: Manage arbitrage`);
+    }
   }
 
   async start() {
     Logger.trace("START ARBITRAGE");
+    this.telegram.sendMessage(`Start arbitrage ${new Date()}`);
     this.exchanges.forEach((element) => {
       this.manageArbitrage(element);
     });

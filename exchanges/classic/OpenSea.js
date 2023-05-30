@@ -98,6 +98,7 @@ export default class {
       }, []);
     } catch (error) {
       Logger.error("callCollection", error);
+      return error;
     }
   }
 

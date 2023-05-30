@@ -40,29 +40,33 @@ export default class {
   }
 
   async getNft(collections) {
-    const rep = await fetch("https://sudoapi.xyz/v1/defined", {
-      headers: {
-        "content-type": "application/json",
-        "sec-ch-ua":
-          '"Google Chrome";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"macOS"',
-        Referer: "https://sudoswap.xyz/",
-        "Referrer-Policy": "strict-origin-when-cross-origin",
-      },
-      body: '{"query":"{\\n          filterNftPoolCollections(\\n            limit: 25,\\n            filters: {\\n              exchange: \\"0xb16c1342e617a5b6e4b631eb114483fdb289c0a4\\",\\n              volumeUSD24: {gt: \\"300\\"}\\n              nftVolume24: {gt: \\"1\\"}\\n              nftBalance: {gt: \\"1\\"}\\n            },\\n            rankings: {\\n              attribute: nftVolume24,\\n              direction: DESC\\n            }) {\\n              results {\\n                collectionAddress\\n                imageUrl\\n                name\\n                volumeUSD24\\n                volumeNBT24\\n                nftVolume24\\n                floorNBT\\n                offerNBT\\n                nftBalance\\n              }\\n          }\\n        }"}',
-      method: "POST",
-    });
-    const nfts = await rep.json();
-    return nfts.data.filterNftPoolCollections.results.reduce((acc, el) => {
-      if (el.offerNBT)
-        acc[el.collectionAddress] = {
-          sellQuote: el.offerNBT,
-          name: el.name,
-          slug: this.getSlug(el.collectionAddress, collections),
-        };
-      return acc;
-    }, {});
+    try {
+      const rep = await fetch("https://sudoapi.xyz/v1/defined", {
+        headers: {
+          "content-type": "application/json",
+          "sec-ch-ua":
+            '"Google Chrome";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": '"macOS"',
+          Referer: "https://sudoswap.xyz/",
+          "Referrer-Policy": "strict-origin-when-cross-origin",
+        },
+        body: '{"query":"{\\n          filterNftPoolCollections(\\n            limit: 25,\\n            filters: {\\n              exchange: \\"0xb16c1342e617a5b6e4b631eb114483fdb289c0a4\\",\\n              volumeUSD24: {gt: \\"300\\"}\\n              nftVolume24: {gt: \\"1\\"}\\n              nftBalance: {gt: \\"1\\"}\\n            },\\n            rankings: {\\n              attribute: nftVolume24,\\n              direction: DESC\\n            }) {\\n              results {\\n                collectionAddress\\n                imageUrl\\n                name\\n                volumeUSD24\\n                volumeNBT24\\n                nftVolume24\\n                floorNBT\\n                offerNBT\\n                nftBalance\\n              }\\n          }\\n        }"}',
+        method: "POST",
+      });
+      const nfts = await rep.json();
+      return nfts.data.filterNftPoolCollections.results.reduce((acc, el) => {
+        if (el.offerNBT)
+          acc[el.collectionAddress] = {
+            sellQuote: el.offerNBT,
+            name: el.name,
+            slug: this.getSlug(el.collectionAddress, collections),
+          };
+        return acc;
+      }, {});
+    } catch (error) {
+      return error;
+    }
   }
 
   async getTrendingCollections(collections) {
@@ -75,6 +79,7 @@ export default class {
       return this.collections;
     } catch (error) {
       Logger.error(error);
+      return error;
     }
   }
 
@@ -116,6 +121,7 @@ export default class {
       );
     } catch (error) {
       Logger.error(error);
+      return error;
     }
   }
 
