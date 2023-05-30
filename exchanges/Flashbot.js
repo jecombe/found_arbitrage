@@ -111,12 +111,8 @@ export default class {
       .requestFlashLoan(bytes)
       .estimateGas();
     const marginGas = Math.ceil(gas * 1.1);
-    const gasCostEth = this.utils.convert(marginGas);
 
-    Logger.debug("GAS: ", gasCostEth);
-    ///  Logger.debug("GAS  + margin: ", marginGas);
-
-    return marginGas; // 10%
+    return marginGas;
   }
 
   calculateProfit() {}

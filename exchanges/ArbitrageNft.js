@@ -70,14 +70,7 @@ export default class {
           `Collection ${collectionName} is profitable for ~= ${netProfit} ETH`
         );
         await this.flashbot.tryTransaction(bytesParams);
-      } else {
-        Logger.trace(`Collection ${collectionName} is not profitable`);
-        //  const tx = await this.flashbot.createTx(bytesParams);
-
-        await this.flashbot.tryTransaction(bytesParams);
-        // await this.flashbot.signBundle(tx);
-        // const isSimul = await this.flashbot.simulateBundle();
-      }
+      } else Logger.trace(`Collection ${collectionName} is not profitable`);
     } catch (error) {
       Logger.error("isProfitableGas", error);
     }
