@@ -150,18 +150,13 @@ export default class {
   }
 
   async getEmpruntable() {
-    try {
-      // Taux de commission en décimal
-      const commissionRate = 0.05;
+    // Taux de commission en décimal
 
-      // Conversion de la balance en ETH
-      const balanceEth = ethers.utils.formatEther(this.balance);
+    // Conversion de la balance en ETH
+    const balanceEth = ethers.utils.formatEther(this.balance);
 
-      // Calcul du montant empruntable en ETH
-      return parseFloat(balanceEth) / (1 + this.flashloanFees);
-    } catch (error) {
-      console.log(error);
-    }
+    // Calcul du montant empruntable en ETH
+    return parseFloat(balanceEth) / (1 + this.flashloanFees);
   }
 
   async comparePrices(nfts, amm, collectionAddr, exchangeToBuy) {
@@ -175,6 +170,10 @@ export default class {
       Logger.info(
         `Maybe profitable arbitrage ${nfts[0].tokenId} on collection ${amm.collections[collectionAddr].name} buy on ${exchangeToBuy.exchange}: ${nfts[0].price} sell to ${amm.exchange}: ${priceInEth} DIFFERENCE: ${difference}`
       );
+      if (priceInEth > this.borrowable) {
+        Logger.trace(`priceInEth > this.borrowable ${this.borrowable}`);
+        return;
+      }
       await this.manageProfit(
         difference,
         amm,
@@ -224,7 +223,7 @@ export default class {
   async start() {
     Logger.trace("START ARBITRAGE");
     this.balance = await this.getBalance();
-    const montantEmprubntable = await this.getEmpruntable();
+    this.borrowable = await this.getEmpruntable();
     this.telegram.sendMessage(`Start arbitrage ${new Date()}`);
     this.exchanges.forEach((element) => {
       this.manageArbitrage(element);
