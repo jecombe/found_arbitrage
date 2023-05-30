@@ -4,19 +4,18 @@ import {
 } from "@flashbots/ethers-provider-bundle";
 import dotenv from "dotenv";
 import Web3EthContract from "web3-eth-contract";
-import { BigNumber } from "ethers";
+//import { BigNumber } from "ethers";
 import ethers from "ethers";
 import { createRequire } from "module";
 import Logger from "../utils/Logger.js";
 const require = createRequire(import.meta.url);
 const artifactFlashloan = require("../artifacts/Flashloan.json");
-
-export const GWEI = BigNumber.from(10).pow(9);
-export const PRIORITY_FEE = GWEI.mul(100);
+import BigNumber from "bignumber.js";
 dotenv.config();
 
 export default class {
-  constructor(config) {
+  constructor(config, utils) {
+    this.utils = utils;
     this.config = config;
 
     this.authSigner = this.getWallet();
@@ -32,12 +31,55 @@ export default class {
     );
   }
 
+  getGwei() {}
+
+  getMaxPriorityfees() {}
+
   getProvider() {
     return new ethers.providers.JsonRpcProvider(process.env.PROVIDER_MAINNET);
   }
 
   getWallet() {
     return new ethers.Wallet(process.env.SECRET_KEY, this.provider);
+  }
+
+  getMaxPrioFees(ethProfit) {
+    // Convertir le montant en Wei
+    // const amountInWei = this.utils.web3.utils.toWei(
+    //   ethProfit.toString(),
+    //   "ether"
+    // );
+    // const ethAmount = new BigNumber(ethProfit.toString());
+    // const percentage = new BigNumber("0.01");
+    // const weiAmount = ethAmount.times(1e18); // Conversion en wei
+    // const deduction = weiAmount.times(1 - percentage);
+
+    // const deductionInteger = new BigNumber(
+    //   parseInt(deduction.mul(0.01).toFixed(0))
+    // );
+
+    // Quantité d'ETH en Gwei
+    const ethAmount = new BigNumber(ethProfit);
+    const ethInGwei = ethAmount.mul(10 ** 9);
+
+    // Pourcentage à déduire (0.01%)
+    const percentage = new BigNumber("0.01");
+    const maxPriorityFee = ethInGwei.mul(percentage).div(100).toFixed(8);
+
+    // Calcul de la nouvelle quantité d'ETH en Gwei
+    const remainingEthInGwei = ethInGwei.minus(maxPriorityFee);
+
+    // Conversion du résultat en ETH
+    const remainingEth = remainingEthInGwei.div(10 ** 9);
+
+    return { maxPriorityFee, remainingEth };
+
+    // return deduction.toString();
+    // Calculer la Max Priority Fee (1%)
+    // return amountInWei;
+    //const result = weiAmount.times(ethAmount);
+
+    //return result;
   }
 
   async createBundle() {
@@ -66,16 +108,18 @@ export default class {
     const gas = await this.contractFlashloan.methods
       .requestFlashLoan(bytes)
       .estimateGas();
-    Logger.debug("GAS: ", gas);
     const marginGas = Math.ceil(gas * 1.1);
-    Logger.debug("GAS  + margin: ", marginGas);
+    const gasCostEth = this.utils.convert(marginGas);
+
+    Logger.debug("GAS: ", gasCostEth);
+    ///  Logger.debug("GAS  + margin: ", marginGas);
 
     return marginGas; // 10%
   }
 
   calculateProfit() {}
 
-  async signBundle(gasLimit, transaction) {
+  async signBundle(transaction) {
     // const flashbotsProvider = await FlashbotsBundleProvider.create(
     //   this.provider,
     //   this.authSigner,
@@ -133,7 +177,6 @@ export default class {
         if ("error" in res) {
           throw new Error(res.error.message);
         }
-        // 检查交易是否上链
         const bundleResolution = await res.wait();
         if (bundleResolution === FlashbotsBundleResolution.BundleIncluded) {
           Logger.info(
