@@ -170,7 +170,7 @@ export default class {
       Logger.info(
         `Maybe profitable arbitrage ${nfts[0].tokenId} on collection ${amm.collections[collectionAddr].name} buy on ${exchangeToBuy.exchange}: ${nfts[0].price} sell to ${amm.exchange}: ${priceInEth} DIFFERENCE: ${difference}`
       );
-      if (priceInEth > this.borrowable) {
+      if (priceInEth > nfts[0].price) {
         Logger.trace(`priceInEth > this.borrowable ${this.borrowable}`);
         return;
       }
