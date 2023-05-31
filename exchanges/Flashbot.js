@@ -64,7 +64,10 @@ export default class {
       //return ethers.utils.formatEther(remainingAmountWei);
       return remainingAmountWei;
     } catch (error) {
-      Logger.error(`Error manageEip1559 with NFT: - ${name} - ${bytes}`, error);
+      Logger.error(
+        `Error manageEip1559 with NFT: - ${name} - ${bytesParams}`,
+        error
+      );
       return undefined;
     }
   }
