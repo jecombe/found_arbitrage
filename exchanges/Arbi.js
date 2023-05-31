@@ -217,7 +217,7 @@ export default class {
     Logger.debug(
       `💸 NFT ${
         nftOpensea.name
-      } 💸\n------------------------------------------\n 🖼️ Codllection: ${
+      } 💸\n------------------------------------------\n 🖼️ Collection: ${
         nftOpensea.address
       } 🖼️\nTokenId: ${
         nftOpensea.tokenId
