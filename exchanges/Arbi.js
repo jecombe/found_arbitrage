@@ -15,7 +15,6 @@ const artifactFlashloan = require("../artifacts/Flashloan.json");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 import WebSocket from "ws";
 const PONG = 0;
-console.log("okokokok");
 export default class {
   constructor(params) {
     this.tokenLoan = params.tokenLoan;
@@ -46,7 +45,7 @@ export default class {
 
   stop() {
     Logger.warn("User Stop");
-    this.ws.close();
+
     const command = spawn("stop arbitrage");
   }
 
