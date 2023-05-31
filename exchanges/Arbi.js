@@ -236,7 +236,7 @@ export default class {
         getNftPoolCollection.offerNBT
       );
       if (_.isEmpty(pools)) {
-        Logger.warn(`💸 NFT ${nftOpensea.name} 💸\n ⚠ Pool is empty ⚠`);
+        Logger.warn(`❌ NFT ${nftOpensea.name} pool is empty ❌`);
         return;
       }
 
