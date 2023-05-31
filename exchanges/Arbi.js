@@ -201,7 +201,7 @@ export default class {
         await this.updateBalance();
       } else
         Logger.trace(
-          `Collection ${nftOpensea.address} with tokenId: ${nftOpensea.tokenId}is not profitable`
+          `Collection ${nftOpensea.address} with tokenId: ${nftOpensea.tokenId} is not profitable`
         );
     } catch (error) {
       Logger.error("isProfitableGas", error);
