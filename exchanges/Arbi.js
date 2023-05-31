@@ -319,6 +319,7 @@ export default class {
   async itemList(json) {
     const nftOpensea = this.parseNftOpensea(json);
     if (Number(nftOpensea.price) > this.borrowable) {
+      this.loggerEnoughFound(nftOpensea);
       return;
     }
     try {
