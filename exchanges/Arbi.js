@@ -259,18 +259,48 @@ export default class {
     return ethers.utils.formatEther(wei.toString());
   }
 
-  async itemList(json) {
-    const nftOpensea = this.parseNftOpensea(json);
+  loggerEnoughFound(nftOpensea) {
+    Logger.fatal(
+      `🔔 Not enough funds to purchase the collection ${
+        nftOpensea.address
+      } 🔔\n⚖️ balance: ${ethers.utils.formatEther(
+        this.balance
+      )} ETH\n💰 priceNft: ${nftOpensea.price}\n💰 borrowable: ${
+        this.borrowable
+      }`
+    );
+  }
+
+  async getPriceSudoswap(collectionAddr) {
     try {
-      const ts = await this.sudoswap.getPriceSellCollection(nftOpensea.address);
+      const ts = await this.sudoswap.getPriceSellCollection(collectionAddr);
       const res = await ts.json();
 
-      if (!res || !res.data) return;
+      if (!res || !res.data) return null;
 
-      const { getNftPoolCollection } = res.data;
+      return res.data;
+    } catch (error) {
+      Logger.error("getPriceSudoswap", error);
+      return null;
+    }
+  }
+
+  async itemList(json) {
+    const nftOpensea = this.parseNftOpensea(json);
+
+    if (nftOpensea.price > this.borrowable) {
+      this.loggerEnoughFound(nftOpensea);
+      return;
+    }
+    try {
+      const { getNftPoolCollection } = await this.getPriceSudoswap(
+        nftOpensea.address
+      );
+
       if (getNftPoolCollection !== null) {
         if (getNftPoolCollection.offerNBT) {
           const difference = this.comparePrice(json, getNftPoolCollection);
+
           if (difference > 0) {
             await this.manageProfitable(
               nftOpensea,
@@ -402,6 +432,7 @@ export default class {
       this.utils.convertToEth(amm.collections[collectionAddr].sellQuote)
     );
     const difference = Number(priceInEth) - Number(nfts[0].price);
+
     Logger.trace(`Gross profit: ${Number(difference).toFixed(18)} ETH`);
 
     if (nfts[0].price > this.borrowable) {
