@@ -338,6 +338,12 @@ export default class {
             getNftPoolCollection,
             difference
           );
+        } else {
+          Logger.warn(
+            `😩 Not profitable 😩\nCollection: ${
+              nftOpensea.address
+            }\nProfit: ${this.parseWeiToEth(difference)} ETH`
+          );
         }
       }
     } catch (error) {
