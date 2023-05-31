@@ -400,6 +400,7 @@ export default class {
 
       setTimeout(() => {
         console.log("reconnect");
+        this.startWs();
       }, 30000);
     });
   }

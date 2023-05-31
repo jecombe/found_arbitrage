@@ -148,15 +148,15 @@ export default class {
         (acc, el) => {
           if (el.poolType === "BUY" || el.poolType === "BUY_AND_SELL") {
             if (Number(el.balanceT) >= Number(price) && Number(el.spotPriceT)) {
-              if (el.delta === "0") {
-                acc.push({
-                  address: el.poolAddress,
-                  balance: BigNumber.from(el.balanceT),
-                  spotPrice: BigNumber.from(el.spotPriceT),
-                  delta: el.delta || null,
-                  fee: el.fee || null,
-                });
-              }
+              // if (el.delta === "0") {
+              acc.push({
+                address: el.poolAddress,
+                balance: BigNumber.from(el.balanceT),
+                spotPrice: BigNumber.from(el.spotPriceT),
+                delta: el.delta || null,
+                fee: el.fee || null,
+              });
+              //}
             }
           }
           return acc;
