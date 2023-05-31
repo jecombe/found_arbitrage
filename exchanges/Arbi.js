@@ -109,7 +109,7 @@ export default class {
     const openSeaPrice = Number(json.payload.payload.base_price);
     const sudoswapPrice = Number(getNftPoolCollection.offerNBT);
 
-    return openSeaPrice - sudoswapPrice;
+    return sudoswapPrice - openSeaPrice;
   }
 
   async searchPool(collectionAddr, price) {
@@ -228,7 +228,7 @@ export default class {
       )} ETH\nDifference: ${this.parseWeiToEth(
         profit
       )}\n------------------------------------------\n 🏊 Pool Sudoswap: ${
-        advantagePool.addressd
+        advantagePool.address
       } 🏊\n⚖️ Balance: ${this.parseWeiToEth(
         advantagePool.balance
       )}\n💰Spot price: ${this.parseWeiToEth(
