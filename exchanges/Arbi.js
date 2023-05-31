@@ -25,9 +25,8 @@ export default class {
     this.config = this.createConfig(params);
     this.balance = null;
     this.flashloanFees = params.flashloanFees;
-
     this.ws = new WebSocket(
-      "wss://stream.openseabeta.com/socket/websocket?token=dc917d8db4bf4a378a8fcf8a16500b90"
+      `wss://stream.openseabeta.com/socket/websocket?token=${process.env.KEY_OPENSEA}`
     );
     this.sudoswap = new Sudoswap(this.utils);
     this.opensea = new OpenSea(this.utils);
@@ -305,13 +304,7 @@ export default class {
 
   async itemList(json) {
     const nftOpensea = this.parseNftOpensea(json);
-    // console.log(
-    //   "::::::::::::::::::::::::::::::",
-    //   this.borrowable,
-    //   this.parseWeiToEth(nftOpensea.price)
-    // );
     if (Number(nftOpensea.price) > this.borrowable) {
-      // this.loggerEnoughFound(nftOpensea);
       return;
     }
     try {
@@ -319,17 +312,17 @@ export default class {
         nftOpensea.address
       );
 
-      if (getNftPoolCollection !== null) {
-        if (getNftPoolCollection.offerNBT) {
-          const difference = this.comparePrice(json, getNftPoolCollection);
+      if (!getNftPoolCollection) return;
 
-          if (difference > 0) {
-            await this.manageProfitable(
-              nftOpensea,
-              getNftPoolCollection,
-              difference
-            );
-          }
+      if (getNftPoolCollection.offerNBT) {
+        const difference = this.comparePrice(json, getNftPoolCollection);
+
+        if (difference > 0) {
+          await this.manageProfitable(
+            nftOpensea,
+            getNftPoolCollection,
+            difference
+          );
         }
       }
     } catch (error) {
@@ -402,122 +395,7 @@ export default class {
     }
   }
 
-  async manageProfit(
-    difference,
-    amm,
-    collectionAddr,
-    priceInEth,
-    exchangeToBuy,
-    nfts
-  ) {
-    try {
-      const pools = await amm.getPoolInfos(collectionAddr, priceInEth);
-      if (_.isEmpty(pools)) {
-        Logger.debug(
-          `POOL ON COLLECTION ${amm.collections[collectionAddr].name} IS EMPTY BECAUSE ANY POOLS HAVE CORRECT BALANCES`
-        );
-        return;
-      }
-
-      const bytesAllParams = await this.getParamsEncoding(
-        exchangeToBuy,
-        nfts[0],
-        collectionAddr,
-        pools[0].address,
-        amm
-      );
-      console.log(bytesAllParams);
-
-      if (!bytesAllParams) return false;
-
-      return this.isProfitableGas(
-        bytesAllParams,
-        difference,
-        amm.collections[collectionAddr].name
-      );
-    } catch (error) {
-      Logger.error("manageProfit", error);
-      return error;
-    }
-  }
-
-  async comparePrices(nfts, amm, collectionAddr, exchangeToBuy) {
-    const priceInEth = Number(
-      this.utils.convertToEth(amm.collections[collectionAddr].sellQuote)
-    );
-    const difference = Number(priceInEth) - Number(nfts[0].price);
-
-    Logger.trace(`Gross profit: ${Number(difference).toFixed(18)} ETH`);
-
-    if (nfts[0].price > this.borrowable) {
-      Logger.fatal(
-        `Not enough funds to purchase the collection ${
-          amm.collections[collectionAddr].name
-        }: \nbalance: ${ethers.utils.formatEther(
-          this.balance
-        )} ETH\npriceNft: ${nfts[0].price}\nborrowable: ${this.borrowable}`
-      );
-      return;
-    }
-
-    try {
-      Logger.info(
-        `🚨 Maybe profitable arbitrage ! 🚨\nNftId: ${nfts[0].tokenId}\nCollection ${amm.collections[collectionAddr].name}\n${exchangeToBuy.exchange} price: ${nfts[0].price} ETH\n${amm.exchange} price: ${priceInEth} ETH\nDifference: ${difference} ETH`
-      );
-
-      await this.manageProfit(
-        difference,
-        amm,
-        collectionAddr,
-        priceInEth,
-        exchangeToBuy,
-        nfts
-      );
-    } catch (error) {
-      this.telegram.sendMessage(`ERROR: COMPARE PRICE ENCODING`);
-
-      Logger.error("COMPARE PRICE ENCODING", error);
-    }
-  }
-
-  async manageArbitrage({ amm, toCompare }) {
-    try {
-      await amm.getTrendingCollections(amm.collections);
-      this.saveCollection = amm.collections;
-      for await (const collectionAddr of Object.keys(amm.collections)) {
-        for await (const exchange of toCompare) {
-          await sleep(1000);
-          const nfts = await exchange.getNftsOnCollection(
-            collectionAddr,
-            amm.collections[collectionAddr]
-          );
-          if (_.isEmpty(nfts))
-            Logger.warn(
-              `Collection ${amm.collections[collectionAddr].name} not found on ${exchange.exchange}`
-            );
-          else await this.comparePrices(nfts, amm, collectionAddr, exchange);
-        }
-      }
-      Logger.info("Waiting for update...");
-      await sleep(30000);
-
-      this.manageArbitrage({ amm, toCompare });
-    } catch (error) {
-      this.telegram.sendMessage(`ERROR: Manage arbitrage`);
-    }
-  }
-
   async getBalance() {
     return this.flashbot.contractFlashloan.methods.getBalance().call();
-  }
-
-  async start() {
-    Logger.trace("START ARBITRAGE");
-    this.balance = await this.getBalance();
-    this.borrowable = await this.getEmpruntable();
-    this.telegram.sendMessage(`Start arbitrage ${new Date()}`);
-    this.exchanges.forEach((element) => {
-      this.manageArbitrage(element);
-    });
   }
 }
