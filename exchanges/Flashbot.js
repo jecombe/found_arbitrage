@@ -16,10 +16,10 @@ export const GWEI = big.from(10).pow(9);
 export const PRIORITY_FEE = GWEI.mul(100);
 const priorityFee = big.from(10).pow(9);
 export default class {
-  constructor(config, utils) {
+  constructor(config, utils, telegram) {
     this.utils = utils;
     this.config = config;
-    this.telegram = config.telegram;
+    this.telegram = telegram;
     this.authSigner = this.getWallet();
     this.provider = this.getProvider();
     this.contractFlashloan = this.getContract();
