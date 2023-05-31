@@ -225,7 +225,7 @@ export default class {
         nftOpensea,
         advantagePool,
         profit,
-        loggerManageProfitable
+        getNftPoolCollection
       );
       const bytesAllParams = await this.getParamsEncoding(
         nftOpensea.tokenId,
