@@ -49,16 +49,29 @@ export default class {
     };
   }
 
+  async updateBalance() {
+    try {
+      this.balance = await this.getBalance();
+      this.borrowable = await this.getEmpruntable();
+    } catch (error) {
+      Logger.error("updateBalance", error);
+    }
+  }
+
   async onOpen() {
     Logger.info(`🟢 Connected to WebSocket 🟢`);
-    this.ws.send(JSON.stringify(this.subscribe()));
-    // this.balance = await this.getBalance();
-    // this.borrowable = await this.getEmpruntable();
-    setInterval(() => {
-      const heartbeatMessage = JSON.stringify(this.ping());
-      this.ws.send(heartbeatMessage);
-      Logger.trace(`PING`);
-    }, 30000);
+    try {
+      await this.updateBalance();
+      this.ws.send(JSON.stringify(this.subscribe()));
+
+      setInterval(() => {
+        const heartbeatMessage = JSON.stringify(this.ping());
+        this.ws.send(heartbeatMessage);
+        Logger.trace(`PING`);
+      }, 30000);
+    } catch (error) {
+      Logger.error("onOpen", erro);
+    }
   }
 
   decryptMessage(data) {
@@ -132,6 +145,19 @@ export default class {
     return objetMax;
   }
 
+  loggerIsProfitableGas(netProfit, nftOpensea) {
+    this.telegram.sendMessage(
+      `Collection ${
+        nftOpensea.address
+      } is profitable for ~= ${this.parseWeiToEth(netProfit)} ETH`
+    );
+    Logger.info(
+      `Collection ${
+        nftOpensea.address
+      } is profitable for ~= ${this.parseWeiToEth(netProfit)} ETH`
+    );
+  }
+
   async isProfitableGas(bytesParams, profit, nftOpensea) {
     // calculate price gas and call flashloan cost
     try {
@@ -143,23 +169,39 @@ export default class {
 
       if (!netProfit) return;
 
-      Logger.trace("Net profit: ", this.parseWeiToEth(netProfit.toString()));
       if (netProfit > 0) {
-        this.telegram.sendMessage(
-          `Collection ${
-            nftOpensea.address
-          } is profitable for ~= ${this.parseWeiToEth(netProfit)} ETH`
-        );
-        Logger.info(
-          `Collection ${
-            nftOpensea.address
-          } is profitable for ~= ${this.parseWeiToEth(netProfit)} ETH`
-        );
-        await this.flashbot.tryTransaction(bytesParams);
+        Logger.trace("Net profit: ", this.parseWeiToEth(netProfit.toString()));
+        this.loggerIsProfitableGas(netProfit, nftOpensea);
+        const transac = await this.flashbot.tryTransaction(bytesParams);
+        Logger.info("Transaction success full", transac);
+        this.telegram.sendMessage("Transaction success full");
+        await this.updateBalance();
       } else Logger.trace(`Collection ${nftOpensea.address} is not profitable`);
     } catch (error) {
       Logger.error("isProfitableGas", error);
     }
+  }
+
+  loggerManageProfitable(nftOpensea, advantagePool, profit) {
+    Logger.debug(
+      `💸 NFT ${
+        nftOpensea.name
+      } 💸\n------------------------------------------\n 🖼️ Collection: ${
+        nftOpensea.address
+      } 🖼️\nTokenId: ${
+        nftOpensea.tokenId
+      }\n💰 Opensea price: ${this.parseWeiToEth(
+        nftOpensea.price
+      )}\n💰 Sudoswap price: ${this.parseWeiToEth(
+        getNftPoolCollection.offerNBT
+      )}\nDifference: ${this.parseWeiToEth(
+        profit
+      )}\n------------------------------------------\n 🏊‍♂️ Pool Sudoswap: ${
+        advantagePool.address
+      } 🏊‍♂️\n⚖️ Balance: ${advantagePool.balance}\n💰Spot price: ${
+        advantagePool.spotPrice
+      }\n Delta: ${advantagePool.delta}\nFees: ${advantagePool.fee}`
+    );
   }
 
   async manageProfitable(nftOpensea, getNftPoolCollection, profit) {
@@ -172,27 +214,9 @@ export default class {
         Logger.warn(`💸 NFT ${nftOpensea.name} 💸\n ⚠ Pool is empty ⚠`);
         return;
       }
+      this.loggerManageProfitable(nftOpensea, advantagePool, profit);
 
       const advantagePool = this.searchAdvantagePool(pools);
-      Logger.debug(
-        `💸 NFT ${
-          nftOpensea.name
-        } 💸\n------------------------------------------\n🖼️ Collection: ${
-          nftOpensea.address
-        }🖼️\nTokenId: ${
-          nftOpensea.tokenId
-        }\n💰 Opensea price: ${this.parseWeiToEth(
-          nftOpensea.price
-        )}\n💰 Sudoswap price: ${this.parseWeiToEth(
-          getNftPoolCollection.offerNBT
-        )}\nDifference: ${this.parseWeiToEth(
-          profit
-        )}\n------------------------------------------\n🏊‍♂️ Pool Sudoswap: ${
-          advantagePool.address
-        }🏊‍♂️\n⚖️ Balance: ${advantagePool.balance}\n💰Spot price: ${
-          advantagePool.spotPrice
-        }\n Delta: ${advantagePool.delta}\nFees: ${advantagePool.fee}`
-      );
 
       const bytesAllParams = await this.getParamsEncoding(
         nftOpensea.tokenId,

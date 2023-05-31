@@ -205,7 +205,7 @@ export default class {
         Logger.info(
           "isSimulate ================================================"
         );
-        //await this.sendBundle();
+        return this.sendBundle();
       }
     } catch (error) {
       Logger.error("tryTransaction", error);
