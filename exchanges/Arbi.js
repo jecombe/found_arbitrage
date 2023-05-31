@@ -4,6 +4,7 @@ import OpenSea from "./classic/OpenSea.js";
 import Logger from "../utils/Logger.js";
 import Utils from "../utils/Utils.js";
 import ethers from "ethers";
+import os from "os";
 import { BigNumber } from "ethers";
 import { createRequire } from "module";
 import Flashbot from "./Flashbot.js";
@@ -23,6 +24,8 @@ export default class {
     this.telegram = new Telegram();
     this.config = this.createConfig(params);
     this.balance = null;
+    this.flashloanFees = params.flashloanFees;
+
     this.ws = new WebSocket(
       "wss://stream.openseabeta.com/socket/websocket?token=dc917d8db4bf4a378a8fcf8a16500b90"
     );
@@ -48,11 +51,20 @@ export default class {
       ref: 0,
     };
   }
+  getEmpruntable() {
+    // Taux de commission en décimal
+
+    // Conversion de la balance en ETH
+
+    // Calcul du montant empruntable en ETH
+    return this.balance / (1 + this.flashloanFees);
+  }
 
   async updateBalance() {
     try {
-      this.balance = await this.getBalance();
-      this.borrowable = await this.getEmpruntable();
+      this.balance = BigNumber.from(await this.getBalance());
+      const borrow = this.getEmpruntable();
+      this.borrowable = BigNumber.from(borrow.toString());
     } catch (error) {
       Logger.error("updateBalance", error);
     }
@@ -197,15 +209,21 @@ export default class {
         nftOpensea.tokenId
       }\n💰 Opensea price: ${this.parseWeiToEth(
         nftOpensea.price
-      )}\n💰 Sudoswap price: ${this.parseWeiToEth(
+      )} ETH\n💰 Sudoswap price: ${this.parseWeiToEth(
         getNftPoolCollection.offerNBT
-      )}\nDifference: ${this.parseWeiToEth(
+      )} ETH\nDifference: ${this.parseWeiToEth(
         profit
-      )}\n------------------------------------------\n 🏊‍♂️ Pool Sudoswap: ${
+      )}\n------------------------------------------\n 🏊 Pool Sudoswap: ${
         advantagePool.address
-      } 🏊‍♂️\n⚖️ Balance: ${advantagePool.balance}\n💰Spot price: ${
+      } 🏊\n⚖️ Balance: ${this.parseWeiToEth(
+        advantagePool.balance
+      )}\n💰Spot price: ${this.parseWeiToEth(
         advantagePool.spotPrice
-      }\n Delta: ${advantagePool.delta}\nFees: ${advantagePool.fee}`
+      )} ETH\n📊 Delta: ${advantagePool.delta}\n📊 Fees: ${this.parseWeiToEth(
+        advantagePool.fee
+      )}\n------------------------------------------\n📝 Me: ${os.hostname()}\n⚖️ Balance: ${this.parseWeiToEth(
+        this.balance
+      )}\n📈 Borrowable amount: ${this.parseWeiToEth(this.borrowable)}`
     );
   }
 
@@ -263,11 +281,11 @@ export default class {
     Logger.fatal(
       `🔔 Not enough funds to purchase the collection ${
         nftOpensea.address
-      } 🔔\n⚖️ balance: ${ethers.utils.formatEther(
+      } 🔔\n⚖️ balance: ${this.parseWeiToEth(
         this.balance
-      )} ETH\n💰 priceNft: ${nftOpensea.price}\n💰 borrowable: ${
-        this.borrowable
-      }`
+      )} ETH\n💰 priceNft: ${this.parseWeiToEth(
+        nftOpensea.price
+      )}\n💰 borrowable: ${this.parseWeiToEth(this.borrowable)} ETH`
     );
   }
 
@@ -287,9 +305,13 @@ export default class {
 
   async itemList(json) {
     const nftOpensea = this.parseNftOpensea(json);
-
-    if (nftOpensea.price > this.borrowable) {
-      this.loggerEnoughFound(nftOpensea);
+    // console.log(
+    //   "::::::::::::::::::::::::::::::",
+    //   this.borrowable,
+    //   this.parseWeiToEth(nftOpensea.price)
+    // );
+    if (Number(nftOpensea.price) > this.borrowable) {
+      // this.loggerEnoughFound(nftOpensea);
       return;
     }
     try {
@@ -350,7 +372,9 @@ export default class {
     });
 
     this.ws.on("close", () => {
-      Logger.fatal(`❗️WebSocket connection closed❗️\nTrying to reconnect...`);
+      Logger.fatal(
+        `❗️ WebSocket connection closed ❗️ \nTrying to reconnect...`
+      );
       setTimeout(() => {
         this.startWs();
       }, 30000);
@@ -415,16 +439,6 @@ export default class {
       Logger.error("manageProfit", error);
       return error;
     }
-  }
-
-  async getEmpruntable() {
-    // Taux de commission en décimal
-
-    // Conversion de la balance en ETH
-    const balanceEth = ethers.utils.formatEther(this.balance);
-
-    // Calcul du montant empruntable en ETH
-    return parseFloat(balanceEth) / (1 + this.flashloanFees);
   }
 
   async comparePrices(nfts, amm, collectionAddr, exchangeToBuy) {
