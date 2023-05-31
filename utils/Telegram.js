@@ -6,13 +6,24 @@ import { Telegraf } from "telegraf";
 dotenv.config();
 
 export default class {
-  constructor() {
+  constructor(arbitrage) {
     this.bot = new Telegraf(process.env.BOT_TOKEN);
+    this.arbitrage = arbitrage;
     this.launch();
+  }
+
+  listenCommand() {
+    this.bot.command("close", () => {
+      this.arbitrage.closeWs();
+    });
+    this.bot.command("executions", (cxt) => {
+      cxt.reply(JSON.stringify(this.arbitrage.executions));
+    });
   }
 
   launch() {
     this.bot.launch();
+    this.listenCommand();
   }
 
   sendMessage(message) {

@@ -21,7 +21,6 @@ export default class {
     this.addrFlashloan = params.addrFlashloan;
     this.amount = params.amount;
     this.utils = new Utils();
-    this.telegram = new Telegram();
     this.config = this.createConfig(params);
     this.balance = null;
     this.flashloanFees = params.flashloanFees;
@@ -31,6 +30,8 @@ export default class {
     this.sudoswap = new Sudoswap(this.utils);
     this.opensea = new OpenSea(this.utils);
     this.flashbot = new Flashbot(this.config, this.utils, this.telegram);
+    this.telegram = new Telegram(this);
+    this.executions = [];
   }
 
   subscribe() {
@@ -40,6 +41,11 @@ export default class {
       payload: {},
       ref: 2,
     };
+  }
+
+  closeWs() {
+    Logger.warn("User close websocket");
+    this.ws.close();
   }
 
   ping() {
@@ -185,6 +191,11 @@ export default class {
         this.loggerIsProfitableGas(netProfit, nftOpensea);
         const transac = await this.flashbot.tryTransaction(bytesParams);
         Logger.info("Transaction success full", transac);
+        this.executions.push({
+          tokenId: nftOpensea.tokenId,
+          address: nftOpensea.address,
+          price: nftOpensea.price,
+        });
         this.telegram.sendMessage("Transaction success full");
         await this.updateBalance();
       } else
@@ -352,7 +363,11 @@ export default class {
     this.telegram.sendMessage(`Start server ${new Date()}`);
 
     this.ws.on("open", async () => {
-      await this.onOpen();
+      try {
+        await this.onOpen();
+      } catch (error) {
+        Logger.error("onOpen ", error);
+      }
     });
 
     this.ws.on("message", async (data) => {
@@ -360,11 +375,12 @@ export default class {
         await this.onMessage(data);
       } catch (error) {
         console.log(error);
+        Logger.error("onMessage ", error);
       }
     });
 
     this.ws.on("error", (error) => {
-      console.error("WebSocket error:", error);
+      Logger.error("Error onError ", error);
     });
 
     this.ws.on("close", () => {
