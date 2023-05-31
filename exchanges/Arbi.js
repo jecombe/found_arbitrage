@@ -265,6 +265,8 @@ export default class {
       const ts = await this.sudoswap.getPriceSellCollection(nftOpensea.address);
       const res = await ts.json();
 
+      if (!res || !res.data) return;
+
       const { getNftPoolCollection } = res.data;
       if (getNftPoolCollection !== null) {
         if (getNftPoolCollection.offerNBT) {
