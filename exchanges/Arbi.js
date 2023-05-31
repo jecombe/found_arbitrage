@@ -182,7 +182,12 @@ export default class {
     }
   }
 
-  loggerManageProfitable(nftOpensea, advantagePool, profit) {
+  loggerManageProfitable(
+    nftOpensea,
+    advantagePool,
+    profit,
+    getNftPoolCollection
+  ) {
     Logger.debug(
       `💸 NFT ${
         nftOpensea.name
@@ -216,7 +221,12 @@ export default class {
       }
 
       const advantagePool = this.searchAdvantagePool(pools);
-      this.loggerManageProfitable(nftOpensea, advantagePool, profit);
+      this.loggerManageProfitable(
+        nftOpensea,
+        advantagePool,
+        profit,
+        loggerManageProfitable
+      );
       const bytesAllParams = await this.getParamsEncoding(
         nftOpensea.tokenId,
         nftOpensea.address,
