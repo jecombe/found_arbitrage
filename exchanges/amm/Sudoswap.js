@@ -1,6 +1,7 @@
 import axios from "axios";
 import _ from "lodash";
 import Logger from "../../utils/Logger.js";
+import { BigNumber } from "ethers";
 
 export default class {
   constructor(utils) {
@@ -125,6 +126,49 @@ export default class {
     }
   }
 
+  async getPoolData(collection, price) {
+    try {
+      const rep = await fetch("https://sudoapi.xyz/v1/defined", {
+        headers: {
+          "content-type": "application/json",
+          "sec-ch-ua":
+            '"Google Chrome";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": '"macOS"',
+          Referer: "https://sudoswap.xyz/",
+          "Referrer-Policy": "strict-origin-when-cross-origin",
+        },
+        body: `{"query":"{\\n          getNftPoolsByCollectionAndExchange(\\n            collectionAddress: \\"${collection}\\",\\n            networkId: 1,\\n            exchangeAddress: \\"0xb16c1342E617A5B6E4b631EB114483FDB289c0A4\\",\\n            limit: 500) {\\n            items {\\n              assetRecipientAddress\\n              balanceT\\n              bondingCurveAddress\\n              collectionAddress\\n              delta\\n              fee\\n              nftBalance\\n              poolAddress\\n              owner\\n              spotPriceT\\n              spotPriceNBT\\n              tokenAddress\\n              poolType\\n              nftAssets {\\n                tokenId\\n                name\\n                originalImage\\n                attributes {\\n                  class\\n                  css\\n                  displayType\\n                  maxValue\\n                  name\\n                  value\\n                  valueType\\n                }        \\n                media {\\n                  thumbLg\\n                }\\n              }\\n              poolVariant\\n            }\\n          }\\n        }"}`,
+        method: "POST",
+      });
+
+      const data = await rep.json();
+
+      return data.data.getNftPoolsByCollectionAndExchange.items.reduce(
+        (acc, el) => {
+          if (el.poolType === "BUY" || el.poolType === "BUY_AND_SELL") {
+            if (Number(el.balanceT) >= Number(price) && Number(el.spotPriceT)) {
+              //  if (el.delta === "0") {
+              acc.push({
+                address: el.poolAddress,
+                balance: BigNumber.from(el.balanceT),
+                spotPrice: BigNumber.from(el.spotPriceT),
+                delta: el.delta || null,
+                fee: el.fee || null,
+              });
+              //}
+            }
+          }
+          return acc;
+        },
+        []
+      );
+    } catch (error) {
+      Logger.error(error);
+      return error;
+    }
+  }
+
   getParams(pair, nftIds) {
     const model = {
       encodeParams: {
@@ -138,5 +182,35 @@ export default class {
       nftIds,
     };
     return this.utils.encodeAbi(model, payload);
+  }
+
+  getPriceSellCollection(addr) {
+    // return fetch("https://sudoapi.xyz/v1/defined", {
+    //   headers: {
+    //     "content-type": "application/json",
+    //     "sec-ch-ua":
+    //       '"Google Chrome";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
+    //     "sec-ch-ua-mobile": "?0",
+    //     "sec-ch-ua-platform": '"macOS"',
+    //     Referer: "https://sudoswap.xyz/",
+    //     "Referrer-Policy": "strict-origin-when-cross-origin",
+    //   },
+    //   body: '{\ngetNftPoolCollection(collectionAddress: "0x42f1654B8eeB80C96471451B1106b63D0B1a9fe1", exchangeAddress: "0xb16c1342E617A5B6E4b631EB114483FDB289c0A4", networkId: 1) {\n            volumeAllTimeNBT\n          }\n        }',
+    //   // `{\"query\":\"{\\n          getNftEvents(address: \\\"${addr}\\\", networkId: 1, exchangeAddress: \\\"0xb16c1342E617A5B6E4b631EB114483FDB289c0A4\\\", limit: 50) {\\n            items {\\n              tokenId\\n              maker\\n              taker\\n              totalPriceNetworkBaseToken\\n              paymentTokenAddress\\n              individualPrice\\n              eventType\\n              transactionHash\\n              timestamp\\n              numberOfTokens\\n              poolAddress\\n              data{\\n                maker\\n                taker\\n              }\\n            }\\n          }\\n        }\"}`,
+    //   method: "POST",
+    // });
+    return fetch("https://sudoapi.xyz/v1/defined", {
+      headers: {
+        "content-type": "application/json",
+        "sec-ch-ua":
+          '"Google Chrome";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"macOS"',
+        Referer: "https://sudoswap.xyz/",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+      },
+      body: `{"query":"{\\n          getNftPoolCollection(collectionAddress: \\"${addr}\\", exchangeAddress: \\"0xb16c1342E617A5B6E4b631EB114483FDB289c0A4\\", networkId: 1) {\\n            offerNBT\\n          }\\n        }"}`,
+      method: "POST",
+    });
   }
 }

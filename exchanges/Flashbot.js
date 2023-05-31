@@ -19,7 +19,7 @@ export default class {
   constructor(config, utils) {
     this.utils = utils;
     this.config = config;
-
+    this.telegram = config.telegram;
     this.authSigner = this.getWallet();
     this.provider = this.getProvider();
     this.contractFlashloan = this.getContract();
@@ -44,12 +44,12 @@ export default class {
     return new ethers.Wallet(process.env.SECRET_KEY, this.provider);
   }
 
-  async manageEip1559(bytesParams, profit) {
+  async manageEip1559(bytesParams, profit, name) {
     try {
       await this.getBlock();
       this.gasLimit = big.from(await this.getEstimateGasMargin(bytesParams));
       const maxFeePerGasWei = this.getMaxBaseFeeInFutureBlock();
-      const amountWei = ethers.utils.parseUnits(profit.toFixed(18), 18);
+      const amountWei = new BigNumber(`${profit}`); //ethers.utils.parseUnits(profit.toFixed(18), 18);
       this.maxPriorityFeePerGas = big.from(10).pow(9);
       this.maxFeePerGas = priorityFee.add(maxFeePerGasWei);
       const transactionCostWei = this.maxFeePerGas.mul(this.gasLimit);
@@ -61,10 +61,11 @@ export default class {
 
       // Calculer le montant restant après déduction des frais de transaction
       const remainingAmountWei = amountWei.sub(transactionCostWei);
-      return ethers.utils.formatEther(remainingAmountWei);
+      //return ethers.utils.formatEther(remainingAmountWei);
+      return remainingAmountWei;
     } catch (error) {
-      Logger.error("manageEip1559", error);
-      return error;
+      Logger.error(`Error manageEip1559 with NFT: ${name}`, error);
+      return undefined;
     }
   }
 
@@ -195,10 +196,17 @@ export default class {
     try {
       await this.signBundle(await this.createTx(bytesParams));
       const isSimul = await this.simulateBundle();
-      // if (isSimul) await this.sendBundle();
-      // else Logger.trace("isSimulate => ", isSimul);
+
+      if (isSimul) {
+        this.telegram.sendMessage("SIMULATE GOOD");
+        Logger.info(
+          "isSimulate ================================================"
+        );
+        //await this.sendBundle();
+      }
     } catch (error) {
       Logger.error("tryTransaction", error);
+      this.telegram.sendMessage("erreur try transaction");
       return error;
     }
   }

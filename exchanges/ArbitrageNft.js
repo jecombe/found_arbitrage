@@ -60,6 +60,7 @@ export default class {
         profit,
         collectionName
       );
+      if (!netProfit) return;
 
       Logger.debug("Net profit: ", netProfit.toString());
 
@@ -78,7 +79,7 @@ export default class {
   }
 
   async getParamsEncoding(exchangeToBuy, nft, collection, poolAddr, amm) {
-    await sleep(1000);
+    //await sleep(1000);
     try {
       const exchangeClassic = await exchangeToBuy.getParams(
         nft.tokenId,
@@ -165,19 +166,23 @@ export default class {
     );
     const difference = Number(priceInEth) - Number(nfts[0].price);
     Logger.trace(`Gross profit: ${Number(difference).toFixed(18)} ETH`);
-    // if (difference > 0) {
+
+    if (nfts[0].price > this.borrowable) {
+      Logger.fatal(
+        `Not enough funds to purchase the collection ${
+          amm.collections[collectionAddr].name
+        }: \nbalance: ${ethers.utils.formatEther(
+          this.balance
+        )} ETH\npriceNft: ${nfts[0].price}\nborrowable: ${this.borrowable}`
+      );
+      return;
+    }
+
     try {
       Logger.info(
-        `🚨 Maybe profitable arbitrage ! 🚨\nNftId: ${nfts[0].tokenId}\nCollection ${amm.collections[collectionAddr].name}\n${exchangeToBuy.name} price: ${nfts[0].price} ETH\n${amm.exchange} price: ${priceInEth} ETH\nDifference: ${difference} ETH`
+        `🚨 Maybe profitable arbitrage ! 🚨\nNftId: ${nfts[0].tokenId}\nCollection ${amm.collections[collectionAddr].name}\n${exchangeToBuy.exchange} price: ${nfts[0].price} ETH\n${amm.exchange} price: ${priceInEth} ETH\nDifference: ${difference} ETH`
       );
-      if (nfts[0].price > this.borrowable) {
-        Logger.fatal(
-          `can't borrow no enought found: \n-balance: ${ethers.utils.formatEther(
-            this.balance
-          )} ETH\n-priceNft: ${nfts[0].price}\n-borrowable: ${this.borrowable}`
-        );
-        return;
-      }
+
       await this.manageProfit(
         difference,
         amm,
@@ -212,7 +217,7 @@ export default class {
         }
       }
       Logger.info("Waiting for update...");
-      await sleep(60000);
+      await sleep(30000);
 
       this.manageArbitrage({ amm, toCompare });
     } catch (error) {
