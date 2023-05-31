@@ -217,7 +217,7 @@ export default class {
     Logger.debug(
       `💸 NFT ${
         nftOpensea.name
-      } 💸\n------------------------------------------\n 🖼️ Collection: ${
+      } 💸\n------------------------------------------\n 🖼️ Codllection: ${
         nftOpensea.address
       } 🖼️\nTokenId: ${
         nftOpensea.tokenId
@@ -228,7 +228,7 @@ export default class {
       )} ETH\nDifference: ${this.parseWeiToEth(
         profit
       )}\n------------------------------------------\n 🏊 Pool Sudoswap: ${
-        advantagePool.address
+        advantagePool.addressd
       } 🏊\n⚖️ Balance: ${this.parseWeiToEth(
         advantagePool.balance
       )}\n💰Spot price: ${this.parseWeiToEth(
