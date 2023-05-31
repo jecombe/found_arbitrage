@@ -24,14 +24,14 @@ export default class {
     this.config = this.createConfig(params);
     this.balance = null;
     this.flashloanFees = params.flashloanFees;
-    this.ws = new WebSocket(
-      `wss://stream.openseabeta.com/socket/websocket?token=${process.env.KEY_OPENSEA}`
-    );
+
     this.sudoswap = new Sudoswap(this.utils);
     this.opensea = new OpenSea(this.utils);
     this.flashbot = new Flashbot(this.config, this.utils, this.telegram);
     this.telegram = new Telegram(this);
     this.executions = [];
+    this.ping = { id: null, interval: 30000 };
+    this.telegram.sendMessage(`Start server ${new Date()}`);
   }
 
   subscribe() {
@@ -49,13 +49,17 @@ export default class {
     const command = spawn("stop arbitrage");
   }
 
-  ping() {
-    return {
+  startPing() {
+    const heartbeatMessage = JSON.stringify({
       topic: "phoenix",
       event: "heartbeat",
       payload: {},
       ref: 0,
-    };
+    });
+    this.ping.id = setInterval(() => {
+      Logger.trace(`PING`);
+      this.ws.send(heartbeatMessage);
+    }, this.ping.interval);
   }
   getEmpruntable() {
     // Taux de commission en décimal
@@ -81,12 +85,7 @@ export default class {
     try {
       await this.updateBalance();
       this.ws.send(JSON.stringify(this.subscribe()));
-
-      setInterval(() => {
-        const heartbeatMessage = JSON.stringify(this.ping());
-        this.ws.send(heartbeatMessage);
-        Logger.trace(`PING`);
-      }, 30000);
+      this.startPing();
     } catch (error) {
       Logger.error("onOpen", erro);
     }
@@ -355,7 +354,6 @@ export default class {
   async onMessage(data) {
     try {
       const json = this.decryptMessage(data);
-
       if (this.isPong(data.ref)) retur;
       if (json.event === "item_listed") {
         await this.itemList(json);
@@ -367,8 +365,13 @@ export default class {
   }
 
   startWs() {
-    this.telegram.sendMessage(`Start server ${new Date()}`);
+    const date = new Date();
 
+    Logger.info(`Start server ${date}`);
+
+    this.ws = new WebSocket(
+      `wss://stream.openseabeta.com/socket/websocket?token=${process.env.KEY_OPENSEA}`
+    );
     this.ws.on("open", async () => {
       try {
         await this.onOpen();
@@ -380,8 +383,8 @@ export default class {
     this.ws.on("message", async (data) => {
       try {
         await this.onMessage(data);
+        this.ws.close();
       } catch (error) {
-        console.log(error);
         Logger.error("onMessage ", error);
       }
     });
@@ -394,8 +397,10 @@ export default class {
       Logger.fatal(
         `❗️ WebSocket connection closed ❗️ \nTrying to reconnect...`
       );
+      clearInterval(this.ping.id);
+
       setTimeout(() => {
-        this.startWs();
+        console.log("reconnect");
       }, 30000);
     });
   }
