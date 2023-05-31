@@ -187,7 +187,10 @@ export default class {
         Logger.info("Transaction success full", transac);
         this.telegram.sendMessage("Transaction success full");
         await this.updateBalance();
-      } else Logger.trace(`Collection ${nftOpensea.address} is not profitable`);
+      } else
+        Logger.trace(
+          `Collection ${nftOpensea.address} with tokenId: ${nftOpensea.tokenId}is not profitable`
+        );
     } catch (error) {
       Logger.error("isProfitableGas", error);
     }
