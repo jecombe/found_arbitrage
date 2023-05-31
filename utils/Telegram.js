@@ -16,6 +16,7 @@ export default class {
     this.bot.command("stop", () => {
       this.arbitrage.stop();
     });
+
     this.bot.command("executions", (cxt) => {
       cxt.reply(JSON.stringify(this.arbitrage.executions));
     });
