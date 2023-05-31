@@ -5,6 +5,7 @@ import Logger from "../utils/Logger.js";
 import Utils from "../utils/Utils.js";
 import ethers from "ethers";
 import os from "os";
+import { spawn } from "child_process";
 import { BigNumber } from "ethers";
 import { createRequire } from "module";
 import Flashbot from "./Flashbot.js";
@@ -43,9 +44,10 @@ export default class {
     };
   }
 
-  closeWs() {
-    Logger.warn("User close websocket");
+  stop() {
+    Logger.warn("User Stop");
     this.ws.close();
+    const command = spawn("stop arbitrage");
   }
 
   ping() {
