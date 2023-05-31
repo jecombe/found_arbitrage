@@ -383,7 +383,6 @@ export default class {
     this.ws.on("message", async (data) => {
       try {
         await this.onMessage(data);
-        this.ws.close();
       } catch (error) {
         Logger.error("onMessage ", error);
       }
