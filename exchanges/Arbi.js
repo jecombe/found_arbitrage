@@ -214,10 +214,9 @@ export default class {
         Logger.warn(`💸 NFT ${nftOpensea.name} 💸\n ⚠ Pool is empty ⚠`);
         return;
       }
-      this.loggerManageProfitable(nftOpensea, advantagePool, profit);
 
       const advantagePool = this.searchAdvantagePool(pools);
-
+      this.loggerManageProfitable(nftOpensea, advantagePool, profit);
       const bytesAllParams = await this.getParamsEncoding(
         nftOpensea.tokenId,
         nftOpensea.address,
