@@ -14,7 +14,7 @@ export default class {
 
   listenCommand() {
     this.bot.command("stop", () => {
-      this.arbitrage.stop();
+      // this.arbitrage.stop();
     });
 
     this.bot.command("executions", (cxt) => {
