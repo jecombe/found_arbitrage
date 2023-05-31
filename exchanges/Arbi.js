@@ -309,8 +309,8 @@ export default class {
       const res = await ts.json();
 
       if (!res || !res.data) return null;
-
-      return res.data;
+      //if (res.data.getNftPoolCollection.offerNBT) return null;
+      return res.data.getNftPoolCollection;
     } catch (error) {
       Logger.error("getPriceSudoswap", error);
       return null;
@@ -323,10 +323,10 @@ export default class {
       return;
     }
     try {
-      const { getNftPoolCollection } = await this.getPriceSudoswap(
+      // const { getNftPoolCollection }
+      const getNftPoolCollection = await this.getPriceSudoswap(
         nftOpensea.address
       );
-
       if (!getNftPoolCollection) return;
 
       if (getNftPoolCollection.offerNBT) {
