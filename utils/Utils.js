@@ -41,4 +41,7 @@ export default class {
   convertToWei(eth) {
     return ethers.utils.parseUnits(eth, "ether");
   }
+  parseWeiToEth(wei) {
+    return ethers.utils.formatEther(wei.toString());
+  }
 }
