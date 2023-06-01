@@ -81,18 +81,21 @@ export default class {
             bytesParams
           );
           this.telegram.sendMessage(
-            `Estimate Gas errorParse: - ${{
+            `Estimate Gas errorParse: - ${JSON.stringify({
               name: opensea.name,
               error: errorParse[0].name,
               price: opensea.price,
-            }}: - `
+            })}: - `
           );
         } catch (error) {
           Logger.error("EstimateGas error catch parse", error);
         }
       } else {
         this.telegram.sendMessage(
-          `EstimateGas ${{ name: opensea.name, price: opensea.price }}`
+          `EstimateGas ${JSON.parse({
+            name: opensea.name,
+            price: opensea.price,
+          })}`
         );
         Logger.error(`EstimateGas: - ${opensea.name} - ${bytesParams}`, error);
       }
