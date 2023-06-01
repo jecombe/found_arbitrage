@@ -30,7 +30,7 @@ export default class {
     this.flashbot = new Flashbot(this.config, this.utils, this.telegram);
     this.telegram = new Telegram(this);
     this.executions = [];
-    this.ping = { id: null, interval: 30000 };
+    this.ping = { id: null, interval: 30000, timeout: 2000 };
     this.telegram.sendMessage(`Start server ${new Date()}`);
   }
 
@@ -57,8 +57,19 @@ export default class {
       ref: 0,
     });
     this.ping.id = setInterval(() => {
-      Logger.trace(`PING`);
-      this.ws.send(heartbeatMessage);
+      if (this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(heartbeatMessage);
+
+        // Définit un délai pour vérifier la réception de la réponse
+        setTimeout(() => {
+          if (this.ws.readyState === WebSocket.OPEN) {
+            Logger.fatal(
+              `💩 The response to the ping was not received within 2 seconds. (Close connexion) 💩`
+            );
+            this.ws.close();
+          }
+        }, this.ping.interval.timeout);
+      }
     }, this.ping.interval);
   }
   getEmpruntable() {
@@ -407,7 +418,6 @@ export default class {
       clearInterval(this.ping.id);
 
       setTimeout(() => {
-        console.log("reconnect");
         this.startWs();
       }, 30000);
     });
