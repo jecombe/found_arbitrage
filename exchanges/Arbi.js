@@ -30,7 +30,8 @@ export default class {
     this.flashbot = new Flashbot(this.config, this.utils, this.telegram);
     this.telegram = new Telegram(this);
     this.executions = [];
-    this.ping = { id: null, interval: 30000, timeout: 2000 };
+    this.ping = { id: null, interval: 30000 };
+    this.timeout = { id: null, timeout: 3000 };
     this.telegram.sendMessage(`Start server ${new Date()}`);
   }
 
@@ -49,7 +50,7 @@ export default class {
     const command = spawn("stop arbitrage");
   }
 
-  startPing() {
+  sendPing() {
     const heartbeatMessage = JSON.stringify({
       topic: "phoenix",
       event: "heartbeat",
@@ -58,17 +59,17 @@ export default class {
     });
     this.ping.id = setInterval(() => {
       if (this.ws.readyState === WebSocket.OPEN) {
+        console.log("send ping");
         this.ws.send(heartbeatMessage);
-
         // Définit un délai pour vérifier la réception de la réponse
-        setTimeout(() => {
+        this.timeout.id = setTimeout(() => {
           if (this.ws.readyState === WebSocket.OPEN) {
             Logger.fatal(
               `💩 The response to the ping was not received within 2 seconds. (Close connexion) 💩`
             );
             this.ws.close();
           }
-        }, this.ping.interval.timeout);
+        }, this.timeout.timeout);
       }
     }, this.ping.interval);
   }
@@ -95,8 +96,8 @@ export default class {
     Logger.info(`🟢 Connected to WebSocket 🟢`);
     try {
       await this.updateBalance();
-      this.ws.send(JSON.stringify(this.subscribe()));
-      this.startPing();
+      //  this.ws.send(JSON.stringify(this.subscribe()));
+      this.sendPing();
     } catch (error) {
       Logger.error("onOpen", erro);
     }
@@ -330,12 +331,7 @@ export default class {
 
   async itemList(json) {
     const nftOpensea = this.parseNftOpensea(json);
-    // if (Number(nftOpensea.price) > this.borrowable) {
-    //   // this.loggerEnoughFound(nftOpensea);
-    //   return;
-    // }
     try {
-      // const { getNftPoolCollection }
       const getNftPoolCollection = await this.getPriceSudoswap(
         nftOpensea.address
       );
@@ -370,10 +366,19 @@ export default class {
     }
   }
 
+  stopPong() {
+    clearTimeout(this.timeout.id);
+  }
+
   async onMessage(data) {
     try {
       const json = this.decryptMessage(data);
-      if (this.isPong(data.ref)) retur;
+
+      if (this.isPong(json.ref)) {
+        this.stopAll();
+        this.sendPing();
+        return;
+      }
       if (json.event === "item_listed") {
         await this.itemList(json);
       }
@@ -381,6 +386,14 @@ export default class {
       Logger.error(error);
       return error;
     }
+  }
+  stopPing() {
+    clearInterval(this.ping.id);
+  }
+
+  stopAll() {
+    this.stopPong();
+    this.stopPing();
   }
 
   startWs() {
@@ -415,8 +428,7 @@ export default class {
       Logger.fatal(
         `❗️ WebSocket connection closed ❗️ \nTrying to reconnect...`
       );
-      clearInterval(this.ping.id);
-
+      this.stopAll();
       setTimeout(() => {
         this.startWs();
       }, 30000);
