@@ -44,10 +44,22 @@ export default class {
     return new ethers.Wallet(process.env.SECRET_KEY, this.provider);
   }
 
+  async estimateGas(bytesParams, name) {
+    try {
+      return big.from(await this.getEstimateGasMargin(bytesParams));
+    } catch (error) {
+      Logger.error(`EstimateGas: - ${name} - ${bytesParams}`, error);
+      return undefined;
+    }
+  }
+
   async manageEip1559(bytesParams, profit, name) {
     try {
       await this.getBlock();
-      this.gasLimit = big.from(await this.getEstimateGasMargin(bytesParams));
+      this.gasLimit = await this.estimateGas(bytesParams, name);
+
+      if (!this.gasLimit) return;
+
       const maxFeePerGasWei = this.getMaxBaseFeeInFutureBlock();
       const amountWei = new BigNumber(`${profit}`); //ethers.utils.parseUnits(profit.toFixed(18), 18);
       this.maxPriorityFeePerGas = big.from(10).pow(9);

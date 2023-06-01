@@ -200,7 +200,7 @@ export default class {
         await this.updateBalance();
       } else
         Logger.trace(
-          `Collection ${nftOpensea.address} with tokenId: ${nftOpensea.tokenId} is not profitable`
+          `Collection ${nftOpensea.address} with tokenId: ${nftOpensea.tokenId} is not profitable - ${bytesParams} -`
         );
     } catch (error) {
       Logger.error("isProfitableGas", error);
@@ -266,7 +266,6 @@ export default class {
       );
 
       if (!bytesAllParams) return null;
-
       this.isProfitableGas(bytesAllParams, profit, nftOpensea);
     } catch (error) {
       Logger.error("manageProfitable", error);
@@ -290,7 +289,7 @@ export default class {
     return ethers.utils.formatEther(wei.toString());
   }
 
-  loggerEnoughFound(nftOpensea) {
+  loggerEnoughFound(nftOpensea, profit) {
     Logger.fatal(
       `🔔 Not enough funds to purchase the collection ${
         nftOpensea.address
@@ -298,7 +297,9 @@ export default class {
         this.balance
       )} ETH\n💰 priceNft: ${this.parseWeiToEth(
         nftOpensea.price
-      )}\n💰 borrowable: ${this.parseWeiToEth(this.borrowable)} ETH`
+      )}ETH\n💰 borrowable: ${this.parseWeiToEth(
+        this.borrowable
+      )} ETH\nProfit: ${this.parseWeiToEth(profit)}`
     );
   }
 
@@ -318,10 +319,10 @@ export default class {
 
   async itemList(json) {
     const nftOpensea = this.parseNftOpensea(json);
-    if (Number(nftOpensea.price) > this.borrowable) {
-      // this.loggerEnoughFound(nftOpensea);
-      return;
-    }
+    // if (Number(nftOpensea.price) > this.borrowable) {
+    //   // this.loggerEnoughFound(nftOpensea);
+    //   return;
+    // }
     try {
       // const { getNftPoolCollection }
       const getNftPoolCollection = await this.getPriceSudoswap(
@@ -333,6 +334,10 @@ export default class {
         const difference = this.comparePrice(json, getNftPoolCollection);
 
         if (difference > 0) {
+          //if (Number(nftOpensea.price) > this.borrowable) {
+          //   this.loggerEnoughFound(nftOpensea, difference);
+          // return;
+          //}
           await this.manageProfitable(
             nftOpensea,
             getNftPoolCollection,
