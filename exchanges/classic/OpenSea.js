@@ -227,6 +227,11 @@ export default class {
           signature: "bytes",
         },
       };
+      Logger.info(
+        "OpenseaParamApi ",
+        signature.data.fulfillment_data.transaction.input_data.parameters
+      );
+
       return this.utils.encodeAbi(
         model,
         signature.data.fulfillment_data.transaction.input_data.parameters

@@ -71,7 +71,7 @@ export default class {
         Logger.info(
           `Collection ${collectionName} is profitable for ~= ${netProfit} ETH`
         );
-        await this.flashbot.tryTransaction(bytesParams);
+        // await this.flashbot.tryTransaction(bytesParams);
       } else Logger.trace(`Collection ${collectionName} is not profitable`);
     } catch (error) {
       Logger.error("isProfitableGas", error);

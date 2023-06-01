@@ -275,7 +275,6 @@ export default class {
 
   parseNftOpensea(json) {
     const { item } = json.payload.payload;
-
     const [, address, tokenId] = item.nft_id.split("/");
     return {
       name: item.metadata.name,
@@ -334,10 +333,12 @@ export default class {
         const difference = this.comparePrice(json, getNftPoolCollection);
 
         if (difference > 0) {
-          //if (Number(nftOpensea.price) > this.borrowable) {
+          // if (Number(nftOpensea.price) > this.borrowable) {
           //   this.loggerEnoughFound(nftOpensea, difference);
-          // return;
-          //}
+          //   return;
+          // }
+          Logger.info("OpenseaWs: ", json.payload.payload);
+
           await this.manageProfitable(
             nftOpensea,
             getNftPoolCollection,

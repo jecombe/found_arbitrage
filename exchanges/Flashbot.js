@@ -11,6 +11,7 @@ import Logger from "../utils/Logger.js";
 const require = createRequire(import.meta.url);
 const artifactFlashloan = require("../artifacts/Flashloan.json");
 import BigNumber from "bignumber.js";
+import axios from "axios";
 dotenv.config();
 export const GWEI = big.from(10).pow(9);
 export const PRIORITY_FEE = GWEI.mul(100);
@@ -44,11 +45,41 @@ export default class {
     return new ethers.Wallet(process.env.SECRET_KEY, this.provider);
   }
 
+  async parseError(data) {
+    try {
+      const funct = data.slice(0, 10);
+      const rep = await axios({
+        url: "https://api.openchain.xyz/signature-database/v1/lookup",
+        method: "GET",
+        headers: {
+          accept: "application/json",
+        },
+        params: {
+          filter: true,
+          function: funct,
+        },
+      });
+      return rep.data.result.function[funct];
+    } catch (error) {
+      Logger.error("parseError: ", error);
+      return undefined;
+    }
+  }
+
   async estimateGas(bytesParams, name) {
     try {
       return big.from(await this.getEstimateGasMargin(bytesParams));
     } catch (error) {
-      Logger.error(`EstimateGas: - ${name} - ${bytesParams}`, error);
+      // const rep = strErrParser(error);
+      console.log(typeof error);
+      if ("data" in error) {
+        try {
+          const errorParse = await this.parseError(error.data);
+          Logger.error(`Estimate Gas errorParse: - ${name} - ${errorParse}`);
+        } catch (error) {
+          Logger.error("EstimateGas error catch parse", error);
+        }
+      } else Logger.error(`EstimateGas: - ${name} - ${bytesParams}`, error);
       return undefined;
     }
   }
