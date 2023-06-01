@@ -139,6 +139,7 @@ export default class {
         exchangeAmm,
         collection,
       };
+      Logger.trace("PAYLOAD ===> ", payload);
       return this.utils.encodeAbi(model, payload);
     } catch (error) {
       return error;
