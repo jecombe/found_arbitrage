@@ -84,7 +84,7 @@ export default class {
             `Estimate Gas errorParse: - ${JSON.stringify({
               name: opensea.name,
               error: errorParse[0].name,
-              price: opensea.price,
+              price: this.utils.parseWeiToEth(opensea.price),
             })}: - `
           );
         } catch (error) {
@@ -94,7 +94,7 @@ export default class {
         this.telegram.sendMessage(
           `EstimateGas ${JSON.parse({
             name: opensea.name,
-            price: opensea.price,
+            price: this.utils.parseWeiToEth(opensea.price),
           })}`
         );
         Logger.error(`EstimateGas: - ${opensea.name} - ${bytesParams}`, error);

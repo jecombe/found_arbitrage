@@ -180,12 +180,12 @@ export default class {
     this.telegram.sendMessage(
       `Collection ${
         nftOpensea.address
-      } is profitable for ~= ${this.parseWeiToEth(netProfit)} ETH`
+      } is profitable for ~= ${this.utils.parseWeiToEth(netProfit)} ETH`
     );
     Logger.info(
       `Collection ${
         nftOpensea.address
-      } is profitable for ~= ${this.parseWeiToEth(netProfit)} ETH`
+      } is profitable for ~= ${this.utils.parseWeiToEth(netProfit)} ETH`
     );
   }
 
@@ -201,7 +201,10 @@ export default class {
       if (!netProfit) return;
 
       if (netProfit > 0) {
-        Logger.trace("Net profit: ", this.parseWeiToEth(netProfit.toString()));
+        Logger.trace(
+          "Net profit: ",
+          this.utils.parseWeiToEth(netProfit.toString())
+        );
         this.loggerIsProfitableGas(netProfit, nftOpensea);
         const transac = await this.flashbot.tryTransaction(bytesParams);
         Logger.info("Transaction success full", transac);
@@ -234,23 +237,25 @@ export default class {
         nftOpensea.address
       } 🖼️\nTokenId: ${
         nftOpensea.tokenId
-      }\n💰 Opensea price: ${this.parseWeiToEth(
+      }\n💰 Opensea price: ${this.utils.parseWeiToEth(
         nftOpensea.price
-      )} ETH\n💰 Sudoswap price: ${this.parseWeiToEth(
+      )} ETH\n💰 Sudoswap price: ${this.utils.parseWeiToEth(
         getNftPoolCollection.offerNBT
-      )} ETH\nDifference: ${this.parseWeiToEth(
+      )} ETH\nDifference: ${this.utils.parseWeiToEth(
         profit
       )}\n------------------------------------------\n 🏊 Pool Sudoswap: ${
         advantagePool.address
-      } 🏊\n⚖️ Balance: ${this.parseWeiToEth(
+      } 🏊\n⚖️ Balance: ${this.utils.parseWeiToEth(
         advantagePool.balance
-      )}\n💰Spot price: ${this.parseWeiToEth(
+      )}\n💰Spot price: ${this.utils.parseWeiToEth(
         advantagePool.spotPrice
-      )} ETH\n📊 Delta: ${advantagePool.delta}\n📊 Fees: ${this.parseWeiToEth(
+      )} ETH\n📊 Delta: ${
+        advantagePool.delta
+      }\n📊 Fees: ${this.utils.parseWeiToEth(
         advantagePool.fee
-      )}\n------------------------------------------\n📝 Me: ${os.hostname()}\n⚖️ Balance: ${this.parseWeiToEth(
+      )}\n------------------------------------------\n📝 Me: ${os.hostname()}\n⚖️ Balance: ${this.utils.parseWeiToEth(
         this.balance
-      )}\n📈 Borrowable amount: ${this.parseWeiToEth(this.borrowable)}`
+      )}\n📈 Borrowable amount: ${this.utils.parseWeiToEth(this.borrowable)}`
     );
   }
 
@@ -298,21 +303,17 @@ export default class {
     };
   }
 
-  parseWeiToEth(wei) {
-    return ethers.utils.formatEther(wei.toString());
-  }
-
   loggerEnoughFound(nftOpensea, profit) {
     Logger.fatal(
       `🔔 Not enough funds to purchase the collection ${
         nftOpensea.address
-      } 🔔\n⚖️ balance: ${this.parseWeiToEth(
+      } 🔔\n⚖️ balance: ${this.utils.parseWeiToEth(
         this.balance
-      )} ETH\n💰 priceNft: ${this.parseWeiToEth(
+      )} ETH\n💰 priceNft: ${this.utils.parseWeiToEth(
         nftOpensea.price
-      )}ETH\n💰 borrowable: ${this.parseWeiToEth(
+      )}ETH\n💰 borrowable: ${this.utils.parseWeiToEth(
         this.borrowable
-      )} ETH\nProfit: ${this.parseWeiToEth(profit)}`
+      )} ETH\nProfit: ${this.utils.parseWeiToEth(profit)}`
     );
   }
 
@@ -357,7 +358,7 @@ export default class {
           Logger.warn(
             `😩 Not profitable 😩\nCollection: ${
               nftOpensea.address
-            }\nProfit: ${this.parseWeiToEth(difference)} ETH`
+            }\nProfit: ${this.utils.parseWeiToEth(difference)} ETH`
           );
         }
       }
