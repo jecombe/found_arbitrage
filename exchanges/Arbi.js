@@ -59,7 +59,7 @@ export default class {
     });
     this.ping.id = setInterval(() => {
       if (this.ws.readyState === WebSocket.OPEN) {
-        console.log("send ping");
+        Logger.trace("send ping");
         this.ws.send(heartbeatMessage);
         // Définit un délai pour vérifier la réception de la réponse
         this.timeout.id = setTimeout(() => {
@@ -96,10 +96,10 @@ export default class {
     Logger.info(`🟢 Connected to WebSocket 🟢`);
     try {
       await this.updateBalance();
-      //  this.ws.send(JSON.stringify(this.subscribe()));
+      this.ws.send(JSON.stringify(this.subscribe()));
       this.sendPing();
     } catch (error) {
-      Logger.error("onOpen", erro);
+      Logger.error("onOpen", error);
     }
   }
 
@@ -383,7 +383,7 @@ export default class {
         await this.itemList(json);
       }
     } catch (error) {
-      Logger.error(error);
+      Logger.error("onMessage", error);
       return error;
     }
   }
