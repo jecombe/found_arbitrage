@@ -66,7 +66,7 @@ export default class {
     }
   }
 
-  async estimateGas(bytesParams, name) {
+  async estimateGas(bytesParams, opensea) {
     try {
       return big.from(await this.getEstimateGasMargin(bytesParams));
     } catch (error) {
@@ -76,22 +76,34 @@ export default class {
         try {
           const errorParse = await this.parseError(error.data);
           Logger.error(
-            `Estimate Gas errorParse: - ${name}: `,
+            `Estimate Gas errorParse: - ${opensea.name}: `,
             errorParse,
             bytesParams
+          );
+          this.telegram.sendMessage(
+            `Estimate Gas errorParse: - ${{
+              name: opensea.name,
+              error: errorParse[0].name,
+              price: opensea.price,
+            }}: - `
           );
         } catch (error) {
           Logger.error("EstimateGas error catch parse", error);
         }
-      } else Logger.error(`EstimateGas: - ${name} - ${bytesParams}`, error);
+      } else {
+        this.telegram.sendMessage(
+          `EstimateGas ${{ name: opensea.name, price: opensea.price }}`
+        );
+        Logger.error(`EstimateGas: - ${opensea.name} - ${bytesParams}`, error);
+      }
       return undefined;
     }
   }
 
-  async manageEip1559(bytesParams, profit, name) {
+  async manageEip1559(bytesParams, profit, opensea) {
     try {
       await this.getBlock();
-      this.gasLimit = await this.estimateGas(bytesParams, name);
+      this.gasLimit = await this.estimateGas(bytesParams, opensea);
 
       if (!this.gasLimit) return;
 
@@ -249,9 +261,7 @@ export default class {
 
       if (isSimul) {
         this.telegram.sendMessage("SIMULATE GOOD");
-        Logger.info(
-          "isSimulate ================================================"
-        );
+        Logger.info("SIMULATE GOOD");
         return this.sendBundle();
       }
     } catch (error) {

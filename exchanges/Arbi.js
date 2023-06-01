@@ -194,7 +194,7 @@ export default class {
       const netProfit = await this.flashbot.manageEip1559(
         bytesParams,
         profit,
-        nftOpensea.name
+        nftOpensea
       );
 
       if (!netProfit) return;
