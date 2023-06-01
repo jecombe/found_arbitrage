@@ -75,7 +75,11 @@ export default class {
       if ("data" in error) {
         try {
           const errorParse = await this.parseError(error.data);
-          Logger.error(`Estimate Gas errorParse: - ${name}: `, errorParse);
+          Logger.error(
+            `Estimate Gas errorParse: - ${name}: `,
+            errorParse,
+            bytesParams
+          );
         } catch (error) {
           Logger.error("EstimateGas error catch parse", error);
         }
