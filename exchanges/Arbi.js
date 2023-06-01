@@ -27,11 +27,12 @@ export default class {
 
     this.sudoswap = new Sudoswap(this.utils);
     this.opensea = new OpenSea(this.utils);
-    this.flashbot = new Flashbot(this.config, this.utils, this.telegram);
-    this.telegram = new Telegram(this);
+
     this.executions = [];
     this.ping = { id: null, interval: 30000 };
     this.timeout = { id: null, timeout: 3000 };
+    this.telegram = new Telegram(this);
+    this.flashbot = new Flashbot(this.config, this.utils, this.telegram);
     this.telegram.sendMessage(`Start server ${new Date()}`);
   }
 
