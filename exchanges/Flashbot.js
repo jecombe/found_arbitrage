@@ -207,8 +207,15 @@ export default class {
             2
           )}`
         );
+        const gasUsed = simulation.results.reduce(
+          (acc, txSimulation) => acc + txSimulation.gasUsed,
+          0
+        );
+
+        const gasPrice = simulation.coinbaseDiff.div(gasUsed);
+        return gasPrice;
       }
-      return sendBundles;
+      throw new Error("Failed to simulate response");
     } catch (error) {
       Logger.error("simulateBundle", error);
       return sendBundles;
@@ -259,13 +266,13 @@ export default class {
   async tryTransaction(bytesParams) {
     try {
       await this.signBundle(await this.createTx(bytesParams));
-      const isSimul = await this.simulateBundle();
+      const gasPrice = await this.simulateBundle();
 
-      if (isSimul) {
-        this.telegram.sendMessage("✅ Simulate good !");
-        Logger.info("✅ Simulate good !");
-        return this.sendBundle();
-      }
+      this.telegram.sendMessage(
+        `✅ Simulate good ! ${Number(gasPrice) / 1e18}`
+      );
+      Logger.info(`✅ Simulate good ! ${Number(gasPrice) / 1e18}`);
+      //return this.sendBundle();
     } catch (error) {
       Logger.error("tryTransaction", error);
       this.telegram.sendMessage("erreur try transaction");

@@ -195,13 +195,13 @@ export default class {
       const { remainingAmountWei, transactionCostWei } =
         await this.flashbot.manageEip1559(bytesParams, profit, nftOpensea);
 
-      if (!remainingAmountWei) return;
+      if (!transactionCostWei) return;
 
-      if (remainingAmountWei > 0) {
-        Logger.trace(
-          "Net profit: ",
-          this.utils.parseWeiToEth(remainingAmountWei.toString())
-        );
+      if (transactionCostWei.toNumber() < profit) {
+        // Logger.trace(
+        //   "Net profit: ",
+        //   this.utils.parseWeiToEth(remainingAmountWei.toString())
+        // );
         this.loggerIsProfitableGas(remainingAmountWei, nftOpensea);
         const transac = await this.flashbot.tryTransaction(bytesParams);
 
@@ -216,10 +216,8 @@ export default class {
             nftOpensea.address
           }\nName: ${nftOpen.name}\nId: ${
             nftOpensea.tokenId
-          }\nProfit: ${this.utils.parseWeiToEth(
-            remainingAmountWei.toString()
-          )}`,
-          transac
+          }\nProfit: ${this.utils.parseWeiToEth(remainingAmountWei.toString())}`
+          // transac
         );
         this.telegram.sendMessage(
           `💸Transaction success full 💸\nCollection: ${
