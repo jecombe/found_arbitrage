@@ -235,7 +235,13 @@ export default class {
         await this.updateBalance();
       } else
         Logger.trace(
-          `😤 Not profitable 😤\nCollection ${nftOpensea.address}\nTokenId: ${nftOpensea.tokenId}\n bytes: ${bytesParams}`
+          `😤 Not profitable 😤\nCollection ${nftOpensea.address}\nTokenId: ${
+            nftOpensea.tokenId
+          }\nProfit: ${this.utils.parseWeiToEth(
+            profit
+          )}\nTransaction price: ${ethers.utils.formatEther(
+            transactionCostWei
+          )}\nBytes: ${bytesParams}`
         );
       this.telegram.sendMessage(
         `😤 Not profitable 😤\nCollection ${nftOpensea.address}\nTokenId: ${
@@ -243,8 +249,8 @@ export default class {
         }\nPrice: ${this.utils.parseWeiToEth(
           nftOpensea.price
         )}\nProfit: ${this.utils.parseWeiToEth(
-          remainingAmountWei.toString()
-        )}\n`
+          profit
+        )}\nTransaction price: ${ethers.utils.formatEther(transactionCostWei)}`
       );
     } catch (error) {
       Logger.error("isProfitableGas", error);
