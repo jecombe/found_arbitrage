@@ -244,9 +244,7 @@ export default class {
           nftOpensea.price
         )}\nProfit: ${this.utils.parseWeiToEth(
           remainingAmountWei.toString()
-        )}\nTransaction cost: ${this.utils.parseWeiToEth(
-          transactionCostWei.toString()
-        )}`
+        )}\n`
       );
     } catch (error) {
       Logger.error("isProfitableGas", error);

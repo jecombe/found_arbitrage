@@ -119,13 +119,13 @@ export default class {
         `Transaction price net: `,
         ethers.utils.formatEther(transactionCostWei)
       );
-      console.log(
-        "====================================",
-        transactionCostWei.toString()
-      );
 
       // Calculer le montant restant après déduction des frais de transaction
       const remainingAmountWei = amountWei.sub(transactionCostWei);
+      console.log(
+        "::::::::::::::::::::::::::::::::::::::::::::",
+        remainingAmountWei
+      );
       //return ethers.utils.formatEther(remainingAmountWei);
       return {
         remainingAmountWei,
