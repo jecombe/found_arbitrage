@@ -129,7 +129,7 @@ export default class {
         `Error manageEip1559 with NFT: - ${name} - ${bytesParams}`,
         error
       );
-      return undefined;
+      return { remainingAmountWei: undefined, transactionCostWei: undefined };
     }
   }
 
