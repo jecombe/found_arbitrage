@@ -194,7 +194,11 @@ export default class {
     try {
       const { remainingAmountWei, transactionCostWei } =
         await this.flashbot.manageEip1559(bytesParams, profit, nftOpensea);
-
+      // .then((resp) => {
+      //   return resp
+      //     ? resp
+      //     : { remainingAmountWei: undefined, transactionCostWei: undefined };
+      // });
       if (!remainingAmountWei) return;
 
       if (

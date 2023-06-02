@@ -87,6 +87,7 @@ export default class {
           );
         } catch (error) {
           Logger.error("EstimateGas error catch parse", error);
+          return undefined;
         }
       } else {
         this.telegram.sendMessage(
