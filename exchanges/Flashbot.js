@@ -66,7 +66,7 @@ export default class {
     }
   }
 
-  async estimateGas(bytesParams, opensea) {
+  async estimateGas(bytesParams, opensea, profit) {
     try {
       return big.from(await this.getEstimateGasMargin(bytesParams));
     } catch (error) {
@@ -82,7 +82,9 @@ export default class {
           this.telegram.sendMessage(
             `❗️ Estimate Gas errorParse ❗️\nName: ${opensea.name}\nError: ${
               errorParse[0].name
-            }\nPrice: ${this.utils.parseWeiToEth(opensea.price)},
+            }\nPrice: ${this.utils.parseWeiToEth(
+              opensea.price
+            )}\nProfit: ${this.utils.parseWeiToEth(profit)} 
             `
           );
         } catch (error) {
@@ -91,10 +93,12 @@ export default class {
         }
       } else {
         this.telegram.sendMessage(
-          `EstimateGas ${JSON.parse({
-            name: opensea.name,
-            price: this.utils.parseWeiToEth(opensea.price),
-          })}`
+          `🚨 Unknow errors 🚨\nName: ${opensea.name}\nError: ${
+            errorParse[0].name
+          }\nPrice: ${this.utils.parseWeiToEth(
+            opensea.price
+          )}\nProfit: ${this.utils.parseWeiToEth(profit)}
+          `
         );
         Logger.error(`EstimateGas: - ${opensea.name} - ${bytesParams}`, error);
       }
@@ -105,7 +109,7 @@ export default class {
   async manageEip1559(bytesParams, profit, opensea) {
     try {
       await this.getBlock();
-      this.gasLimit = await this.estimateGas(bytesParams, opensea);
+      this.gasLimit = await this.estimateGas(bytesParams, opensea, profit);
 
       if (!this.gasLimit)
         return { remainingAmountWei: undefined, transactionCostWei: undefined };
