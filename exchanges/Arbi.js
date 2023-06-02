@@ -192,20 +192,17 @@ export default class {
   async isProfitableGas(bytesParams, profit, nftOpensea) {
     // calculate price gas and call flashloan cost
     try {
-      const netProfit = await this.flashbot.manageEip1559(
-        bytesParams,
-        profit,
-        nftOpensea
-      );
+      const { remainingAmountWei, transactionCostWei } =
+        await this.flashbot.manageEip1559(bytesParams, profit, nftOpensea);
 
-      if (!netProfit) return;
+      if (!remainingAmountWei) return;
 
-      if (netProfit > 0) {
+      if (remainingAmountWei > 0) {
         Logger.trace(
           "Net profit: ",
-          this.utils.parseWeiToEth(netProfit.toString())
+          this.utils.parseWeiToEth(remainingAmountWei.toString())
         );
-        this.loggerIsProfitableGas(netProfit, nftOpensea);
+        this.loggerIsProfitableGas(remainingAmountWei, nftOpensea);
         const transac = await this.flashbot.tryTransaction(bytesParams);
         Logger.info("Transaction success full", transac);
         this.executions.push({
@@ -219,6 +216,17 @@ export default class {
         Logger.trace(
           `Collection ${nftOpensea.address} with tokenId: ${nftOpensea.tokenId} is not profitable - ${bytesParams} -`
         );
+      this.telegram.sendMessage(
+        `Collection ${nftOpensea.address}\nTokenId: ${
+          nftOpensea.tokenId
+        }\nPrice: ${this.utils.parseWeiToEth(
+          nftOpensea.price
+        )}\nProfit: ${this.utils.parseWeiToEth(
+          remainingAmountWei.toString()
+        )}\nTransaction cost: ${this.utils.parseWeiToEth(
+          transactionCostWei.toString()
+        )}`
+      );
     } catch (error) {
       Logger.error("isProfitableGas", error);
     }

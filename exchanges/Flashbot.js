@@ -124,7 +124,7 @@ export default class {
       // Calculer le montant restant après déduction des frais de transaction
       const remainingAmountWei = amountWei.sub(transactionCostWei);
       //return ethers.utils.formatEther(remainingAmountWei);
-      return remainingAmountWei;
+      return { remainingAmountWei, transactionCostWei };
     } catch (error) {
       Logger.error(
         `Error manageEip1559 with NFT: - ${name} - ${bytesParams}`,
