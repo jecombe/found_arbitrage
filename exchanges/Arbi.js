@@ -196,8 +196,8 @@ export default class {
         await this.flashbot.manageEip1559(bytesParams, profit, nftOpensea);
 
       if (!transactionCostWei) return;
-
-      if (transactionCostWei.toNumber() < profit) {
+      //if (transactionCostWei.gt(profit))
+      if (transactionCostWei < profit) {
         // Logger.trace(
         //   "Net profit: ",
         //   this.utils.parseWeiToEth(remainingAmountWei.toString())
