@@ -107,7 +107,8 @@ export default class {
       await this.getBlock();
       this.gasLimit = await this.estimateGas(bytesParams, opensea);
 
-      if (!this.gasLimit) return;
+      if (!this.gasLimit)
+        return { remainingAmountWei: undefined, transactionCostWei: undefined };
 
       const maxFeePerGasWei = this.getMaxBaseFeeInFutureBlock();
       const amountWei = new BigNumber(`${profit}`); //ethers.utils.parseUnits(profit.toFixed(18), 18);
