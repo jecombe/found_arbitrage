@@ -81,7 +81,7 @@ export default class {
             bytesParams
           );
           this.telegram.sendMessage(
-            `❗️ Estimate Gas errorParse ❗️\nName ${opensea.name}\nError: ${
+            `❗️ Estimate Gas errorParse ❗️\nName: ${opensea.name}\nError: ${
               errorParse[0].name
             }\nPrice: ${this.utils.parseWeiToEth(opensea.price)},
             `
@@ -129,7 +129,7 @@ export default class {
       };
     } catch (error) {
       Logger.error(
-        `Error manageEip1559 with NFT: - ${name} - ${bytesParams}`,
+        `Error manageEip1559 with NFT: - ${opensea.name} - ${bytesParams}`,
         error
       );
       return { remainingAmountWei: undefined, transactionCostWei: undefined };
