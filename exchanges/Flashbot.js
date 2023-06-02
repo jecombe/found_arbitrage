@@ -71,7 +71,6 @@ export default class {
       return big.from(await this.getEstimateGasMargin(bytesParams));
     } catch (error) {
       // const rep = strErrParser(error);
-      console.log(typeof error);
       if ("data" in error) {
         try {
           const errorParse = await this.parseError(error.data);
@@ -122,10 +121,6 @@ export default class {
 
       // Calculer le montant restant après déduction des frais de transaction
       const remainingAmountWei = amountWei.sub(transactionCostWei);
-      console.log(
-        "::::::::::::::::::::::::::::::::::::::::::::",
-        remainingAmountWei
-      );
       //return ethers.utils.formatEther(remainingAmountWei);
       return {
         remainingAmountWei,
