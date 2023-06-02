@@ -81,11 +81,10 @@ export default class {
             bytesParams
           );
           this.telegram.sendMessage(
-            `Estimate Gas errorParse: - ${JSON.stringify({
-              name: opensea.name,
-              error: errorParse[0].name,
-              price: this.utils.parseWeiToEth(opensea.price),
-            })}: - `
+            `❗️ Estimate Gas errorParse ❗️\nName ${opensea.name}\nError: ${
+              errorParse[0].name
+            }\nPrice: ${this.utils.parseWeiToEth(opensea.price)},
+            `
           );
         } catch (error) {
           Logger.error("EstimateGas error catch parse", error);
@@ -263,8 +262,8 @@ export default class {
       const isSimul = await this.simulateBundle();
 
       if (isSimul) {
-        this.telegram.sendMessage("SIMULATE GOOD");
-        Logger.info("SIMULATE GOOD");
+        this.telegram.sendMessage("✅ Simulate good !");
+        Logger.info("✅ Simulate good !");
         return this.sendBundle();
       }
     } catch (error) {

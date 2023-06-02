@@ -204,20 +204,37 @@ export default class {
         );
         this.loggerIsProfitableGas(remainingAmountWei, nftOpensea);
         const transac = await this.flashbot.tryTransaction(bytesParams);
-        Logger.info("Transaction success full", transac);
+
         this.executions.push({
           tokenId: nftOpensea.tokenId,
           address: nftOpensea.address,
           price: nftOpensea.price,
         });
-        this.telegram.sendMessage("Transaction success full");
+
+        Logger.info(
+          `💸Transaction success full 💸\nCollection: ${
+            nftOpensea.address
+          }\nName: ${nftOpen.name}\nId: ${
+            nftOpensea.tokenId
+          }\nProfit: ${this.utils.parseWeiToEth(
+            remainingAmountWei.toString()
+          )}`,
+          transac
+        );
+        this.telegram.sendMessage(
+          `💸Transaction success full 💸\nCollection: ${
+            nftOpensea.address
+          }\nName: ${nftOpen.name}\nId: ${
+            nftOpensea.tokenId
+          }\nProfit: ${this.utils.parseWeiToEth(remainingAmountWei.toString())}`
+        );
         await this.updateBalance();
       } else
         Logger.trace(
-          `Collection ${nftOpensea.address} with tokenId: ${nftOpensea.tokenId} is not profitable - ${bytesParams} -`
+          `😤 Not profitable 😤\nCollection ${nftOpensea.address}\nTokenId: ${nftOpensea.tokenId}\n bytes: ${bytesParams}`
         );
       this.telegram.sendMessage(
-        `Collection ${nftOpensea.address}\nTokenId: ${
+        `😤 Not profitable 😤\nCollection ${nftOpensea.address}\nTokenId: ${
           nftOpensea.tokenId
         }\nPrice: ${this.utils.parseWeiToEth(
           nftOpensea.price
