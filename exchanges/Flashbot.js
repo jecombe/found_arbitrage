@@ -115,7 +115,7 @@ export default class {
         return { remainingAmountWei: undefined, transactionCostWei: undefined };
 
       const maxFeePerGasWei = this.getMaxBaseFeeInFutureBlock();
-      const amountWei = new BigNumber(`${profit}`); //ethers.utils.parseUnits(profit.toFixed(18), 18);
+      const amountWei = new BigNumber(`${profit}`);
       this.maxPriorityFeePerGas = big.from(10).pow(9);
       this.maxFeePerGas = priorityFee.add(maxFeePerGasWei);
       const transactionCostWei = this.maxFeePerGas.mul(this.gasLimit);
@@ -248,7 +248,6 @@ export default class {
             }`
           );
           Logger.trace(`Transaction => ${JSON.stringify(res, null, 2)}`);
-          //Logger.trace(JSON.stringify(res, null, 2));
           return this.blockNumber + i;
         } else if (
           bundleResolution ===

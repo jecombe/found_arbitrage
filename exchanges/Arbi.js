@@ -194,11 +194,6 @@ export default class {
     try {
       const { remainingAmountWei, transactionCostWei } =
         await this.flashbot.manageEip1559(bytesParams, profit, nftOpensea);
-      // .then((resp) => {
-      //   return resp
-      //     ? resp
-      //     : { remainingAmountWei: undefined, transactionCostWei: undefined };
-      // });
       if (!remainingAmountWei) return;
 
       if (
@@ -239,18 +234,18 @@ export default class {
         await this.updateBalance();
       } else
         Logger.trace(
-          `😤 Not profitable 😤\nCollection ${nftOpensea.address}\nTokenId: ${
-            nftOpensea.tokenId
-          }\nProfit: ${this.utils.parseWeiToEth(
+          `😤 Not profitable 😤\nCollection ${nftOpensea.address}\nName: ${
+            nftOpensea.name
+          }\nTokenId: ${nftOpensea.tokenId}\nProfit: ${this.utils.parseWeiToEth(
             profit
           )}\nTransaction price: ${ethers.utils.formatEther(
             transactionCostWei
           )}\nBytes: ${bytesParams}`
         );
       this.telegram.sendMessage(
-        `😤 Not profitable 😤\nCollection ${nftOpensea.address}\nTokenId: ${
-          nftOpensea.tokenId
-        }\nPrice: ${this.utils.parseWeiToEth(
+        `😤 Not profitable 😤\nCollection ${nftOpensea.address}\nName: ${
+          nftOpensea.name
+        }\nTokenId: ${nftOpensea.tokenId}\nPrice: ${this.utils.parseWeiToEth(
           nftOpensea.price
         )}\nProfit: ${this.utils.parseWeiToEth(
           profit
@@ -360,7 +355,6 @@ export default class {
       const res = await ts.json();
 
       if (!res || !res.data) return null;
-      //if (res.data.getNftPoolCollection.offerNBT) return null;
       return res.data.getNftPoolCollection;
     } catch (error) {
       Logger.error("getPriceSudoswap", error);
