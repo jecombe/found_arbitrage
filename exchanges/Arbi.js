@@ -387,9 +387,13 @@ export default class {
           );
         } else {
           Logger.warn(
-            `😩 Not profitable 😩\nCollection: ${
-              nftOpensea.address
-            }\nProfit: ${this.utils.parseWeiToEth(difference)} ETH`
+            `😩 Not profitable 😩\nCollection: ${nftOpensea.address}\nName: ${
+              nftOpensea.name
+            }\nTokenId: ${
+              nftOpensea.tokenId
+            }\nPrice: ${this.utils.parseWeiToEth(
+              nftOpensea.price
+            )}\nProfit: ${this.utils.parseWeiToEth(difference)} ETH`
           );
         }
       }
