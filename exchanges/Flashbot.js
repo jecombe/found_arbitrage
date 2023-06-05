@@ -78,7 +78,7 @@ export default class {
             `Estimate Gas errorParse: - ${opensea.name}: `,
             errorParse,
             bytesParams,
-            error.Error
+            error
           );
           this.telegram.sendMessage(
             `❗️ Estimate Gas errorParse ❗️\nName: ${opensea.name}\nError: ${
