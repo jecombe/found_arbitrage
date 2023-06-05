@@ -236,7 +236,11 @@ export default class {
         Logger.trace(
           `😤 Not profitable 😤\nCollection ${nftOpensea.address}\nName: ${
             nftOpensea.name
-          }\nTokenId: ${nftOpensea.tokenId}\nProfit: ${this.utils.parseWeiToEth(
+          }\nTokenId: ${
+            nftOpensea.tokenId
+          }\nPrice Opensea: ${this.utils.parseWeiToEth(
+            nftOpensea.price
+          )}\nProfit: ${this.utils.parseWeiToEth(
             profit
           )}\nTransaction price: ${ethers.utils.formatEther(
             transactionCostWei
@@ -245,7 +249,9 @@ export default class {
       this.telegram.sendMessage(
         `😤 Not profitable 😤\nCollection ${nftOpensea.address}\nName: ${
           nftOpensea.name
-        }\nTokenId: ${nftOpensea.tokenId}\nPrice: ${this.utils.parseWeiToEth(
+        }\nTokenId: ${
+          nftOpensea.tokenId
+        }\nPrice Opensea: ${this.utils.parseWeiToEth(
           nftOpensea.price
         )}\nProfit: ${this.utils.parseWeiToEth(
           profit
@@ -391,9 +397,11 @@ export default class {
               nftOpensea.name
             }\nTokenId: ${
               nftOpensea.tokenId
-            }\nPrice: ${this.utils.parseWeiToEth(
+            }\nPrice Opensea: ${this.utils.parseWeiToEth(
               nftOpensea.price
-            )}\nProfit: ${this.utils.parseWeiToEth(difference)} ETH`
+            )}\nPrice Sudoswap: ${this.utils.parseWeiToEth(
+              getNftPoolCollection.offerNBT
+            )}Profit: ${this.utils.parseWeiToEth(difference)} ETH`
           );
         }
       }
