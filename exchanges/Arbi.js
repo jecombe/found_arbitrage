@@ -401,7 +401,7 @@ export default class {
               nftOpensea.price
             )}\nPrice Sudoswap: ${this.utils.parseWeiToEth(
               getNftPoolCollection.offerNBT
-            )}Profit: ${this.utils.parseWeiToEth(difference)} ETH`
+            )}\nProfit: ${this.utils.parseWeiToEth(difference)} ETH`
           );
         }
       }
